@@ -7,7 +7,7 @@
     <title>{% block title %}Dashboard{% endblock %} | KIRAN Talent Operations</title>
     <meta name="theme-color" content="#0b1f33">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo.svg') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=asset_version('css/style.css')) }}">
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>

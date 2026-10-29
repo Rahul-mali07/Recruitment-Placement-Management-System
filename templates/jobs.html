@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% from "_macros.html" import badge, empty_row %}
+{% from "_macros.html" import badge %}
 {% block title %}Job Openings{% endblock %}
 {% block content %}
 <nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Job Openings</span></nav>
 <div class="page-heading">
     <div>
+        <p class="eyebrow">Opportunity board</p>
         <h1>Job Openings</h1>
         <p class="page-subtitle">Manage company requirements, eligibility criteria and application windows.</p>
     </div>
@@ -75,40 +76,44 @@
 
 <section class="card">
     <div class="card-header">
-        <div><h2>Jobs</h2><p class="muted">{{ jobs|length }} job opening{{ '' if jobs|length == 1 else 's' }} match the current filters.</p></div>
+        <div><h2>Openings</h2><p class="muted">{{ jobs|length }} job opening{{ '' if jobs|length == 1 else 's' }} match the current filters.</p></div>
+        <span class="badge badge--info">{{ summary.open_jobs }} open</span>
     </div>
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Job Code</th><th>Company</th><th>Job Title</th><th>Technology</th>
-                    <th>Openings</th><th>Package</th><th>Location</th><th>Deadline</th>
-                    <th>Employment Type</th><th>Status</th><th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for job in jobs %}
-                <tr>
-                    <td class="mono">{{ job.job_code }}</td>
-                    <td>{{ job.company_name }}<br><span class="muted">{{ job.company_code }}</span></td>
-                    <td><strong>{{ job.title }}</strong><br><span class="muted">{{ job.application_count }} application{{ '' if job.application_count == 1 else 's' }}</span></td>
-                    <td>{{ job.technology }}</td>
-                    <td>{{ job.openings }}</td>
-                    <td>{% if job.min_package is not none or job.max_package is not none %}{{ "%g"|format(job.min_package or 0) }}–{{ "%g"|format(job.max_package or job.min_package or 0) }} LPA{% else %}<span class="muted">Not specified</span>{% endif %}</td>
-                    <td>{{ job.location }}</td>
-                    <td>{{ job.deadline|date_display }}</td>
-                    <td>{{ job.employment_type }}</td>
-                    <td>{{ badge(job.status) }}</td>
-                    <td class="actions-cell">
-                        <a class="btn btn-link btn-sm" href="{{ url_for('job_edit', job_id=job.id) }}">Edit</a>
-                        <a class="btn btn-link btn-sm" href="{{ url_for('applications', job_id=job.id) }}">View Applications</a>
-                    </td>
-                </tr>
-                {% else %}
-                {{ empty_row(11, "No job openings match the selected filters. Create a job or clear the filters.") }}
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="job-list">
+        {% for job in jobs %}
+        <article class="job-row">
+            <div class="job-main">
+                <div class="job-topline">
+                    <span class="mono">{{ job.job_code }}</span>
+                    {{ badge(job.status) }}
+                    <span class="badge badge--neutral">{{ job.employment_type }}</span>
+                </div>
+                <h3>{{ job.title }}</h3>
+                <p class="job-company">{{ job.company_name }} &middot; {{ job.company_code }} &middot; {{ job.location }}</p>
+                <div class="job-tags">
+                    <span>{{ job.technology }}</span>
+                    <span>{{ job.openings }} opening{{ '' if job.openings == 1 else 's' }}</span>
+                    {% if job.experience_required %}<span>{{ job.experience_required }}</span>{% endif %}
+                    <span>Minimum {{ "%g"|format(job.min_percentage) }}%</span>
+                </div>
+            </div>
+            <div class="job-metrics">
+                <div>
+                    <span>Package</span>
+                    <strong>{% if job.min_package is not none or job.max_package is not none %}{{ "%g"|format(job.min_package or 0) }}–{{ "%g"|format(job.max_package or job.min_package or 0) }} LPA{% else %}Not specified{% endif %}</strong>
+                </div>
+                <div><span>Deadline</span><strong>{{ job.deadline|date_display }}</strong></div>
+                <div><span>Applications</span><strong>{{ job.application_count }}</strong></div>
+                <div><span>Qualifications</span><strong title="{{ job.qualifications }}">{{ job.qualifications }}</strong></div>
+            </div>
+            <div class="job-actions">
+                <a class="btn btn-outline btn-sm" href="{{ url_for('applications', job_id=job.id) }}">Applications</a>
+                <a class="btn btn-link btn-sm" href="{{ url_for('job_edit', job_id=job.id) }}">Edit opening</a>
+            </div>
+        </article>
+        {% else %}
+        <p class="empty-state">No job openings match the selected filters. Create a job or clear the filters.</p>
+        {% endfor %}
     </div>
 </section>
 {% endblock %}

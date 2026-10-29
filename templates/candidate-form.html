@@ -9,6 +9,7 @@
 </nav>
 <div class="page-heading">
     <div>
+        <p class="eyebrow">Talent record</p>
         <h1>{{ "Edit Candidate" if mode == 'edit' else "Add Candidate" }}</h1>
         <p class="page-subtitle">
             {% if mode == 'edit' and candidate %}
@@ -37,8 +38,11 @@
 <form method="post" action="{{ url_for('candidate_edit', candidate_id=candidate.id) if mode == 'edit' and candidate else url_for('candidate_new') }}" class="form-card" novalidate>
     {{ csrf_field() }}
 
-    <section class="card">
-        <div class="card-header"><div><h2>Personal Information</h2><p class="muted">Basic identity and contact details.</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">01</span>
+            <div><h2>Personal information</h2><p>Basic identity, contact details and profile state.</p></div>
+        </div>
         <div class="form-grid form-grid--three">
             <div class="form-field">
                 <label for="full_name">Full Name <span class="required">*</span></label>
@@ -89,8 +93,11 @@
         </div>
     </section>
 
-    <section class="card">
-        <div class="card-header"><div><h2>Academic Information</h2><p class="muted">Scores use a percentage on a 0–100 scale.</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">02</span>
+            <div><h2>Academic information</h2><p>Scores use a percentage on a 0–100 scale.</p></div>
+        </div>
         <div class="form-grid form-grid--three">
             <div class="form-field">
                 <label for="qualification">Qualification <span class="required">*</span></label>
@@ -134,8 +141,11 @@
         </div>
     </section>
 
-    <section class="card">
-        <div class="card-header"><div><h2>Skills</h2><p class="muted">Primary technology is used for job eligibility matching.</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">03</span>
+            <div><h2>Skills</h2><p>Primary technology is used for job eligibility matching.</p></div>
+        </div>
         <div class="form-grid form-grid--three">
             <div class="form-field">
                 <label for="primary_technology">Primary Technology <span class="required">*</span></label>
@@ -162,8 +172,11 @@
         </div>
     </section>
 
-    <section class="card">
-        <div class="card-header"><div><h2>Placement Preferences</h2><p class="muted">Location preferences help matching candidates to openings.</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">04</span>
+            <div><h2>Placement preferences</h2><p>Location preferences help match candidates to openings.</p></div>
+        </div>
         <div class="form-grid form-grid--two">
             <div class="form-field">
                 <label for="current_location">Current Location</label>

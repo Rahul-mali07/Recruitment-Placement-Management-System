@@ -62,6 +62,10 @@ class Config:
     SESSION_COOKIE_SECURE = _as_bool(os.environ.get("SESSION_COOKIE_SECURE"), IS_PRODUCTION)
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 8  # eight hours
 
+    # Keep local development in sync with template and stylesheet changes.
+    TEMPLATES_AUTO_RELOAD = not IS_PRODUCTION
+    SEND_FILE_MAX_AGE_DEFAULT = 0 if not IS_PRODUCTION else 31536000
+
     MAX_CONTENT_LENGTH = 2 * 1024 * 1024
     JSON_SORT_KEYS = False
 

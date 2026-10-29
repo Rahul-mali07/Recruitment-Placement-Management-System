@@ -5,6 +5,7 @@
 <nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Candidates</span></nav>
 <div class="page-heading">
     <div>
+        <p class="eyebrow">Talent directory</p>
         <h1>Candidate List</h1>
         <p class="page-subtitle">Search, filter and maintain candidate profiles across technologies and placement stages.</p>
     </div>
@@ -92,13 +93,26 @@
                 {% for candidate in result["items"] %}
                 <tr>
                     <td class="mono">{{ candidate.candidate_code }}</td>
-                    <td><a href="{{ url_for('candidate_details', candidate_id=candidate.id) }}">{{ candidate.full_name }}</a></td>
-                    <td>{{ candidate.email }}</td>
-                    <td>{{ candidate.mobile }}</td>
-                    <td>{{ candidate.primary_technology }}</td>
+                    <td>
+                        <div class="identity-cell">
+                            <span class="identity-avatar" aria-hidden="true">{{ candidate.full_name[:1]|upper }}</span>
+                            <div class="identity-text">
+                                <a href="{{ url_for('candidate_details', candidate_id=candidate.id) }}">{{ candidate.full_name }}</a>
+                                <span>{{ candidate.skill_level }} &middot; {{ candidate.current_location or "Location not set" }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td><div class="contact-stack"><span>{{ candidate.email }}</span></div></td>
+                    <td class="mono">{{ candidate.mobile }}</td>
+                    <td><span class="badge badge--neutral">{{ candidate.primary_technology }}</span></td>
                     <td>{{ candidate.qualification }}</td>
                     <td>{{ candidate.passing_year }}</td>
-                    <td>{{ "%g"|format(candidate.score) }}%</td>
+                    <td>
+                        <div class="score-cell">
+                            <strong>{{ "%g"|format(candidate.score) }}%</strong>
+                            <span class="score-meter" aria-hidden="true"><i style="width: {{ candidate.score }}%"></i></span>
+                        </div>
+                    </td>
                     <td>{{ badge(candidate.profile_status) }}</td>
                     <td class="actions-cell">
                         <a class="btn btn-link btn-sm" href="{{ url_for('candidate_details', candidate_id=candidate.id) }}">View</a>

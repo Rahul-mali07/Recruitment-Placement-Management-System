@@ -628,6 +628,8 @@ code {
     margin-bottom: var(--space-4);
 }
 
+.kpi-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
 .metric-card {
     position: relative;
     display: flex;
@@ -883,7 +885,7 @@ td a { font-weight: 650; }
 
 .score-cell { display: flex; flex-direction: column; gap: 4px; min-width: 70px; }
 .score-cell strong { font-size: 0.82rem; color: var(--ink); }
-.score-meter { width: 72px; height: 4px; overflow: hidden; border-radius: var(--radius-pill); background: #e6e1d7; }
+.score-meter { display: block; width: 72px; height: 4px; overflow: hidden; border-radius: var(--radius-pill); background: #e6e1d7; }
 .score-meter i { display: block; height: 100%; border-radius: inherit; background: var(--teal); }
 
 /* ------------------------------------------------------------------ */
@@ -948,7 +950,7 @@ td a { font-weight: 650; }
 
 .badge--not-checked, .badge--withdrawn, .badge--cancelled, .badge--neutral,
 .badge--not-joined {
-    background: #ecefeF;
+    background: #ecefef;
     border-color: #d8dedc;
     color: #52616b;
 }
@@ -1603,7 +1605,7 @@ progress::-moz-progress-bar { background: var(--blue); border-radius: var(--radi
 .schedule-card { display: flex; flex-direction: column; gap: 0; }
 .schedule-item {
     display: grid;
-    grid-template-columns: 74px minmax(0, 1fr) auto;
+    grid-template-columns: 104px minmax(0, 1fr) auto;
     gap: 12px;
     align-items: center;
     padding: 10px 0;
@@ -1621,7 +1623,8 @@ progress::-moz-progress-bar { background: var(--blue); border-radius: var(--radi
 /* Responsive                                                          */
 /* ------------------------------------------------------------------ */
 @media (max-width: 1280px) {
-    .metric-grid, .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .form-grid--three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .grid--sidebar-right { grid-template-columns: minmax(0, 1fr); }
@@ -1715,7 +1718,7 @@ progress::-moz-progress-bar { background: var(--blue); border-radius: var(--radi
     .auth-points { flex-direction: column; }
     .error-panel { margin: 24px auto; padding: 26px 20px; }
     .job-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
-    .schedule-item { grid-template-columns: 66px minmax(0, 1fr); }
+    .schedule-item { grid-template-columns: 92px minmax(0, 1fr); }
     .schedule-item .badge { grid-column: 2; }
 }
 

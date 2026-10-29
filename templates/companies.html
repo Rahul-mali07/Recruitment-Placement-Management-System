@@ -5,12 +5,20 @@
 <nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Companies</span></nav>
 <div class="page-heading">
     <div>
+        <p class="eyebrow">Partner network</p>
         <h1>Companies</h1>
         <p class="page-subtitle">Maintain hiring partner profiles, HR contacts and open job counts.</p>
     </div>
     <div class="page-actions">
         <a class="btn btn-primary" href="{{ url_for('companies') }}#company-form">Add Company</a>
     </div>
+</div>
+
+<div class="summary-grid">
+    <div class="summary-card"><span>Companies shown</span><strong>{{ companies|length }}</strong></div>
+    <div class="summary-card"><span>Active partners</span><strong>{{ companies|selectattr('status', 'equalto', 'ACTIVE')|list|length }}</strong></div>
+    <div class="summary-card"><span>Open jobs</span><strong>{{ companies|sum(attribute='open_jobs') }}</strong></div>
+    <div class="summary-card"><span>Total job records</span><strong>{{ companies|sum(attribute='total_jobs') }}</strong></div>
 </div>
 
 <section class="card filter-card">
@@ -57,11 +65,25 @@
                     {% for company in companies %}
                     <tr>
                         <td class="mono">{{ company.company_code }}</td>
-                        <td><strong>{{ company.name }}</strong>{% if company.website %}<br><a class="small-link" href="{{ company.website }}" rel="noopener noreferrer" target="_blank">{{ company.website }}</a>{% endif %}</td>
+                        <td>
+                            <div class="identity-cell">
+                                <span class="identity-avatar" aria-hidden="true">{{ company.name[:1]|upper }}</span>
+                                <div class="identity-text">
+                                    <strong>{{ company.name }}</strong>
+                                    {% if company.website %}<a class="small-link" href="{{ company.website }}" rel="noopener noreferrer" target="_blank">{{ company.website }}</a>{% endif %}
+                                </div>
+                            </div>
+                        </td>
                         <td>{{ company.industry }}</td>
                         <td>{{ company.location }}</td>
-                        <td>{{ company.hr_name }}<br><span class="muted">{{ company.hr_email }}</span>{% if company.hr_mobile %}<br><span class="muted">{{ company.hr_mobile }}</span>{% endif %}</td>
-                        <td>{{ company.company_type }}</td>
+                        <td>
+                            <div class="contact-stack">
+                                <span>{{ company.hr_name }}</span>
+                                <a class="small-link" href="mailto:{{ company.hr_email }}">{{ company.hr_email }}</a>
+                                {% if company.hr_mobile %}<span>{{ company.hr_mobile }}</span>{% endif %}
+                            </div>
+                        </td>
+                        <td><span class="badge badge--neutral">{{ company.company_type }}</span></td>
                         <td>{{ badge(company.status) }}</td>
                         <td><a class="text-link" href="{{ url_for('jobs', company_id=company.id) }}">{{ company.open_jobs }} open</a></td>
                         <td class="actions-cell">

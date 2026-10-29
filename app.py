@@ -145,6 +145,21 @@ def create_app(config_object=None, test_config: dict | None = None) -> Flask:
     app.jinja_env.filters["status_label"] = _status_label
     app.jinja_env.globals["csrf_token"] = csrf_token
 
+    def asset_version(filename: str) -> str:
+        asset = Path(app.static_folder) / filename
+        try:
+            return str(int(asset.stat().st_mtime))
+        except OSError:
+            return "1"
+
+    app.jinja_env.globals["asset_version"] = asset_version
+
+    @app.after_request
+    def prevent_development_page_caching(response: Response) -> Response:
+        if not app.config.get("IS_PRODUCTION") and response.mimetype == "text/html":
+            response.headers["Cache-Control"] = "no-store"
+        return response
+
     @app.context_processor
     def inject_globals():
         return {

@@ -5,6 +5,7 @@
 <nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Interviews</span></nav>
 <div class="page-heading">
     <div>
+        <p class="eyebrow">Interview desk</p>
         <h1>Interviews</h1>
         <p class="page-subtitle">Schedule, reschedule and record interview outcomes. New interviews must be dated today or later.</p>
     </div>
@@ -102,33 +103,41 @@
     </section>
 
     <div class="stack">
-        <section class="card">
-            <div class="card-header"><h2>Today's interviews</h2></div>
-            <ul class="compact-list">
-                {% for item in today_list %}
-                <li>
-                    <strong>{{ item.interview_time|time_display }}</strong>
-                    <span>{{ item.candidate_name }}</span>
-                    <span class="muted">{{ item.company_name }} &middot; {{ item.round }}</span>
-                </li>
-                {% else %}
-                <li class="empty-state">No interviews scheduled for today.</li>
-                {% endfor %}
-            </ul>
+        <section class="card schedule-card">
+            <div class="card-header">
+                <div><h2>Today's interviews</h2><p class="muted">{{ today_iso|date_display }}</p></div>
+                <span class="badge badge--info">{{ today_list|length }} scheduled</span>
+            </div>
+            {% for item in today_list %}
+            <div class="schedule-item">
+                <span class="schedule-time">{{ item.interview_time|time_display }}</span>
+                <div class="schedule-main">
+                    <strong>{{ item.candidate_name }}</strong>
+                    <span>{{ item.company_name }} &middot; {{ item.round }}</span>
+                </div>
+                {{ badge(item.status) }}
+            </div>
+            {% else %}
+            <p class="schedule-empty">No interviews scheduled for today.</p>
+            {% endfor %}
         </section>
-        <section class="card">
-            <div class="card-header"><h2>Upcoming interviews</h2></div>
-            <ul class="compact-list">
-                {% for item in upcoming %}
-                <li>
-                    <strong>{{ item.interview_date|date_display }}</strong>
-                    <span>{{ item.candidate_name }}</span>
-                    <span class="muted">{{ item.company_name }} &middot; {{ item.round }} &middot; {{ item.interview_time|time_display }}</span>
-                </li>
-                {% else %}
-                <li class="empty-state">No upcoming interviews.</li>
-                {% endfor %}
-            </ul>
+        <section class="card schedule-card">
+            <div class="card-header">
+                <div><h2>Upcoming interviews</h2><p class="muted">Scheduled and rescheduled from tomorrow.</p></div>
+                <span class="badge badge--neutral">{{ upcoming|length }} next</span>
+            </div>
+            {% for item in upcoming %}
+            <div class="schedule-item">
+                <span class="schedule-time">{{ item.interview_date|date_display }}</span>
+                <div class="schedule-main">
+                    <strong>{{ item.candidate_name }}</strong>
+                    <span>{{ item.company_name }} &middot; {{ item.round }} &middot; {{ item.interview_time|time_display }}</span>
+                </div>
+                {{ badge(item.status) }}
+            </div>
+            {% else %}
+            <p class="schedule-empty">No upcoming interviews.</p>
+            {% endfor %}
         </section>
     </div>
 </div>

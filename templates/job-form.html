@@ -9,6 +9,7 @@
 </nav>
 <div class="page-heading">
     <div>
+        <p class="eyebrow">Opening setup</p>
         <h1>{{ "Edit Job Opening" if mode == 'edit' else "Create Job Opening" }}</h1>
         <p class="page-subtitle">
             {% if mode == 'edit' and job %}{{ job.job_code }} &middot; {{ job.title }}{% else %}Define the role, compensation, eligibility and application dates.{% endif %}
@@ -28,8 +29,11 @@
 
 <form method="post" action="{{ url_for('job_edit', job_id=job.id) if mode == 'edit' and job else url_for('job_new') }}" class="form-card" novalidate>
     {{ csrf_field() }}
-    <section class="card">
-        <div class="card-header"><div><h2>Basic Information</h2><p class="muted">Company, role and capacity details.</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">01</span>
+            <div><h2>Basic information</h2><p>Company, role and capacity details.</p></div>
+        </div>
         <div class="form-grid form-grid--three">
             <div class="form-field">
                 <label for="company_id">Company <span class="required">*</span></label>
@@ -72,8 +76,11 @@
         </div>
     </section>
 
-    <section class="card">
-        <div class="card-header"><div><h2>Compensation</h2><p class="muted">Annual package in LPA (lakhs per annum).</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">02</span>
+            <div><h2>Compensation</h2><p>Annual package in LPA (lakhs per annum).</p></div>
+        </div>
         <div class="form-grid form-grid--three">
             <div class="form-field">
                 <label for="min_package">Minimum Package (LPA)</label>
@@ -93,8 +100,11 @@
         </div>
     </section>
 
-    <section class="card">
-        <div class="card-header"><div><h2>Eligibility Criteria</h2><p class="muted">Used by the application eligibility check.</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">03</span>
+            <div><h2>Eligibility criteria</h2><p>Used by the application eligibility check.</p></div>
+        </div>
         <div class="form-grid form-grid--three">
             <div class="form-field form-field--wide">
                 <label for="qualifications">Qualification(s) <span class="required">*</span></label>
@@ -125,8 +135,11 @@
         </div>
     </section>
 
-    <section class="card">
-        <div class="card-header"><div><h2>Skills</h2><p class="muted">Primary technology must match the candidate's primary technology.</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">04</span>
+            <div><h2>Skills</h2><p>Primary technology must match the candidate's primary technology.</p></div>
+        </div>
         <div class="form-grid form-grid--two">
             <div class="form-field">
                 <label for="technology">Required Technology <span class="required">*</span></label>
@@ -144,8 +157,11 @@
         </div>
     </section>
 
-    <section class="card">
-        <div class="card-header"><div><h2>Important Dates &amp; Status</h2><p class="muted">The deadline cannot be before the posted date.</p></div></div>
+    <section class="form-section">
+        <div class="section-heading">
+            <span class="section-index" aria-hidden="true">05</span>
+            <div><h2>Important dates &amp; status</h2><p>The deadline cannot be before the posted date.</p></div>
+        </div>
         <div class="form-grid form-grid--three">
             <div class="form-field">
                 <label for="posted_date">Posted Date <span class="required">*</span></label>

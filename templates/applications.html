@@ -5,6 +5,7 @@
 <nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Applications</span></nav>
 <div class="page-heading">
     <div>
+        <p class="eyebrow">Pipeline operations</p>
         <h1>Applications</h1>
         <p class="page-subtitle">Track candidate applications, check eligibility and move candidates through the pipeline.</p>
     </div>
@@ -122,9 +123,17 @@
                 {% for app in applications %}
                 <tr>
                     <td class="mono">{{ app.application_code }}</td>
-                    <td><a href="{{ url_for('candidate_details', candidate_id=app.candidate_id) }}">{{ app.candidate_name }}</a><br><span class="muted mono">{{ app.candidate_code }}</span></td>
+                    <td>
+                        <div class="identity-cell">
+                            <span class="identity-avatar" aria-hidden="true">{{ app.candidate_name[:1]|upper }}</span>
+                            <div class="identity-text">
+                                <a href="{{ url_for('candidate_details', candidate_id=app.candidate_id) }}">{{ app.candidate_name }}</a>
+                                <span class="mono">{{ app.candidate_code }}</span>
+                            </div>
+                        </div>
+                    </td>
                     <td>{{ app.company_name }}</td>
-                    <td>{{ app.job_code }}<br><span class="muted">{{ app.job_title }}</span></td>
+                    <td><strong>{{ app.job_code }}</strong><span class="cell-note">{{ app.job_title }}</span></td>
                     <td>{{ app.applied_date|date_display }}</td>
                     <td>
                         {{ badge(app.eligibility_status) }}

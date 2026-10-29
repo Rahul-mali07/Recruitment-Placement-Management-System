@@ -5,6 +5,7 @@
 <nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Placement Process</span></nav>
 <div class="page-heading">
     <div>
+        <p class="eyebrow">Placement workflow</p>
         <h1>Selection, Offer &amp; Placement</h1>
         <p class="page-subtitle">Record interview feedback, issue offers, confirm joining and mark candidates as placed.</p>
     </div>
@@ -40,6 +41,28 @@
 </section>
 
 {% if application %}
+{% set feedback_done = application.status == 'SELECTED' or offer %}
+{% set offer_done = offer %}
+{% set joining_done = offer and offer.joining_status == 'JOINED' %}
+<ol class="workflow-steps" aria-label="Placement workflow progress">
+    <li class="workflow-step{% if feedback_done %} is-done{% elif not application.status == 'SELECTED' %} is-active{% endif %}">
+        <span class="workflow-step-number" aria-hidden="true">01</span>
+        <span class="workflow-step-text"><strong>Interview feedback</strong><span>Ratings and result</span></span>
+    </li>
+    <li class="workflow-step{% if application.status == 'SELECTED' or offer %} is-done{% elif feedback_done %} is-active{% endif %}">
+        <span class="workflow-step-number" aria-hidden="true">02</span>
+        <span class="workflow-step-text"><strong>Candidate selected</strong><span>Cleared for offer</span></span>
+    </li>
+    <li class="workflow-step{% if offer_done %} is-done{% elif application.status == 'SELECTED' %} is-active{% endif %}">
+        <span class="workflow-step-number" aria-hidden="true">03</span>
+        <span class="workflow-step-text"><strong>Offer issued</strong><span>Package and joining date</span></span>
+    </li>
+    <li class="workflow-step{% if joining_done %} is-done{% elif offer %} is-active{% endif %}">
+        <span class="workflow-step-number" aria-hidden="true">04</span>
+        <span class="workflow-step-text"><strong>Joined &amp; placed</strong><span>Final placement record</span></span>
+    </li>
+</ol>
+
 <section class="selection-banner">
     <div>
         <p class="eyebrow">{{ application.application_code }}</p>

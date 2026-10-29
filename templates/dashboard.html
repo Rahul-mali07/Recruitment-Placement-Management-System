@@ -16,45 +16,44 @@
 </div>
 
 <div class="metric-grid">
-    <a class="metric-card" href="{{ url_for('candidates') }}">
-        <span class="metric-label">Total Candidates</span>
+    <a class="metric-card metric-card--lead" href="{{ url_for('candidates') }}">
+        <span class="metric-label">Total candidates</span>
         <span class="metric-value">{{ metrics.total_candidates }}</span>
         <span class="metric-hint">{{ metrics.active_candidates }} currently active</span>
     </a>
     <a class="metric-card" href="{{ url_for('candidates', status='ACTIVE') }}">
-        <span class="metric-label">Active Candidates</span>
+        <span class="metric-label">Active candidates</span>
         <span class="metric-value">{{ metrics.active_candidates }}</span>
-        <span class="metric-hint">Profile status ACTIVE</span>
-    </a>
-    <a class="metric-card" href="{{ url_for('companies') if can_access('companies') else '#' }}">
-        <span class="metric-label">Companies</span>
-        <span class="metric-value">{{ metrics.companies }}</span>
-        <span class="metric-hint">Registered hiring partners</span>
-    </a>
-    <a class="metric-card" href="{{ url_for('jobs', status='OPEN') if can_access('jobs') else '#' }}">
-        <span class="metric-label">Open Jobs</span>
-        <span class="metric-value">{{ metrics.open_jobs }}</span>
-        <span class="metric-hint">Job openings accepting applications</span>
+        <span class="metric-hint">Profiles ready for placement</span>
     </a>
     <a class="metric-card" href="{{ url_for('applications') }}">
         <span class="metric-label">Applications</span>
         <span class="metric-value">{{ metrics.applications }}</span>
         <span class="metric-hint">All recorded applications</span>
     </a>
-    <a class="metric-card" href="{{ url_for('interviews') }}">
-        <span class="metric-label">Interviews</span>
-        <span class="metric-value">{{ metrics.interviews }}</span>
-        <span class="metric-hint">{{ metrics.interviews_today }} scheduled today</span>
+    <a class="metric-card" href="{{ url_for('jobs', status='OPEN') if can_access('jobs') else '#' }}">
+        <span class="metric-label">Open jobs</span>
+        <span class="metric-value">{{ metrics.open_jobs }}</span>
+        <span class="metric-hint">Openings accepting applications</span>
     </a>
-    <a class="metric-card" href="{{ url_for('applications', status='SELECTED') }}">
-        <span class="metric-label">Selected</span>
-        <span class="metric-value">{{ metrics.selected }}</span>
-        <span class="metric-hint">Applications marked selected</span>
+</div>
+
+<div class="secondary-metrics" aria-label="Additional placement metrics">
+    <a class="secondary-metric" href="{{ url_for('companies') if can_access('companies') else '#' }}">
+        <span>Hiring partners</span>
+        <strong>{{ metrics.companies }}</strong>
     </a>
-    <a class="metric-card" href="{{ url_for('candidates', status='PLACED') }}">
-        <span class="metric-label">Placed</span>
-        <span class="metric-value">{{ metrics.placed }}</span>
-        <span class="metric-hint">Candidates confirmed placed</span>
+    <a class="secondary-metric" href="{{ url_for('interviews') }}">
+        <span>Interviews &middot; {{ metrics.interviews_today }} today</span>
+        <strong>{{ metrics.interviews }}</strong>
+    </a>
+    <a class="secondary-metric" href="{{ url_for('applications', status='SELECTED') }}">
+        <span>Selected</span>
+        <strong>{{ metrics.selected }}</strong>
+    </a>
+    <a class="secondary-metric" href="{{ url_for('candidates', status='PLACED') }}">
+        <span>Placed candidates</span>
+        <strong>{{ metrics.placed }}</strong>
     </a>
 </div>
 
@@ -63,7 +62,7 @@
         <div class="card-header">
             <div>
                 <h2>Recruitment funnel</h2>
-                <p class="muted">Counts are based on the current demonstration database.</p>
+                <p class="muted">Live stage counts from the current placement database.</p>
             </div>
         </div>
         <div class="funnel">
@@ -200,19 +199,4 @@
     </section>
 </div>
 
-<section class="card reference-card">
-    <div class="card-header">
-        <div>
-            <h2>Reference figures from the assignment brief</h2>
-            <p class="muted">Illustrative targets only. These numbers are not calculated from the database.</p>
-        </div>
-        <span class="badge badge--info">Illustrative</span>
-    </div>
-    <div class="reference-grid">
-        <div><span>Total candidates</span><strong>2,450</strong></div>
-        <div><span>Open jobs</span><strong>28</strong></div>
-        <div><span>Interviews today</span><strong>14</strong></div>
-        <div><span>Placed</span><strong>685</strong></div>
-    </div>
-</section>
 {% endblock %}
