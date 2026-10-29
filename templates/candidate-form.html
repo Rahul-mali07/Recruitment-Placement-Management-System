@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field, error_for, select_options %}
+{% block title %}{{ "Edit Candidate" if mode == 'edit' else "Add Candidate" }}{% endblock %}
+{% block content %}
+<nav class="breadcrumbs">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span>
+    <a href="{{ url_for('candidates') }}">Candidates</a><span>/</span>
+    <span>{{ "Edit" if mode == 'edit' else "Add" }}</span>
+</nav>
+<div class="page-heading">
+    <div>
+        <h1>{{ "Edit Candidate" if mode == 'edit' else "Add Candidate" }}</h1>
+        <p class="page-subtitle">
+            {% if mode == 'edit' and candidate %}
+            Updating {{ candidate.candidate_code }} &middot; {{ candidate.full_name }}
+            {% else %}
+            Create a complete candidate profile with academic, skill and placement details.
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline" href="{{ url_for('candidates') }}">Back to Candidate List</a>
+    </div>
+</div>
+
+{% if errors %}
+<div class="alert alert--error" role="alert">
+    <strong>Please correct the highlighted fields.</strong>
+    <ul class="error-list">
+        {% for field, message in errors.items() %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('candidate_edit', candidate_id=candidate.id) if mode == 'edit' and candidate else url_for('candidate_new') }}" class="form-card" novalidate>
+    {{ csrf_field() }}
+
+    <section class="card">
+        <div class="card-header"><div><h2>Personal Information</h2><p class="muted">Basic identity and contact details.</p></div></div>
+        <div class="form-grid form-grid--three">
+            <div class="form-field">
+                <label for="full_name">Full Name <span class="required">*</span></label>
+                <input type="text" id="full_name" name="full_name" value="{{ form.get('full_name', '') }}" required autocomplete="name"
+                       {% if errors.get('full_name') %}aria-invalid="true" aria-describedby="full_name-error"{% endif %}>
+                {{ error_for(errors, 'full_name') }}
+            </div>
+            <div class="form-field">
+                <label for="email">Email <span class="required">*</span></label>
+                <input type="email" id="email" name="email" value="{{ form.get('email', '') }}" required autocomplete="email"
+                       {% if errors.get('email') %}aria-invalid="true" aria-describedby="email-error"{% endif %}>
+                <p class="helper-text">Must be unique across candidate profiles.</p>
+                {{ error_for(errors, 'email') }}
+            </div>
+            <div class="form-field">
+                <label for="mobile">Mobile <span class="required">*</span></label>
+                <input type="text" id="mobile" name="mobile" value="{{ form.get('mobile', '') }}" required inputmode="numeric"
+                       maxlength="10" pattern="[0-9]{10}" autocomplete="tel"
+                       {% if errors.get('mobile') %}aria-invalid="true" aria-describedby="mobile-error"{% endif %}>
+                <p class="helper-text">Exactly 10 digits, for example 9823001001.</p>
+                {{ error_for(errors, 'mobile') }}
+            </div>
+            <div class="form-field">
+                <label for="date_of_birth">Date of Birth</label>
+                <input type="date" id="date_of_birth" name="date_of_birth" value="{{ form.get('date_of_birth', '') }}"
+                       {% if errors.get('date_of_birth') %}aria-invalid="true" aria-describedby="date_of_birth-error"{% endif %}>
+                {{ error_for(errors, 'date_of_birth') }}
+            </div>
+            <div class="form-field">
+                <label>Gender</label>
+                <div class="radio-row">
+                    {% for gender in genders %}
+                    <label class="radio-option">
+                        <input type="radio" name="gender" value="{{ gender }}" {% if form.get('gender') == gender %}checked{% endif %}>
+                        <span>{{ gender }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {{ error_for(errors, 'gender') }}
+            </div>
+            <div class="form-field">
+                <label for="profile_status">Profile Status <span class="required">*</span></label>
+                <select id="profile_status" name="profile_status" required>
+                    {{ select_options(profile_statuses, form.get('profile_status', 'ACTIVE')) }}
+                </select>
+                {{ error_for(errors, 'profile_status') }}
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Academic Information</h2><p class="muted">Scores use a percentage on a 0–100 scale.</p></div></div>
+        <div class="form-grid form-grid--three">
+            <div class="form-field">
+                <label for="qualification">Qualification <span class="required">*</span></label>
+                <select id="qualification" name="qualification" required>
+                    <option value="">Select qualification</option>
+                    {{ select_options(qualifications, form.get('qualification', '')) }}
+                </select>
+                {{ error_for(errors, 'qualification') }}
+            </div>
+            <div class="form-field">
+                <label for="college">College <span class="required">*</span></label>
+                <input type="text" id="college" name="college" value="{{ form.get('college', '') }}" required
+                       {% if errors.get('college') %}aria-invalid="true" aria-describedby="college-error"{% endif %}>
+                {{ error_for(errors, 'college') }}
+            </div>
+            <div class="form-field">
+                <label for="university">University</label>
+                <input type="text" id="university" name="university" value="{{ form.get('university', '') }}">
+                {{ error_for(errors, 'university') }}
+            </div>
+            <div class="form-field">
+                <label for="passing_year">Passing Year <span class="required">*</span></label>
+                <input type="number" id="passing_year" name="passing_year" value="{{ form.get('passing_year', '') }}"
+                       min="1980" max="2100" required
+                       {% if errors.get('passing_year') %}aria-invalid="true" aria-describedby="passing_year-error"{% endif %}>
+                {{ error_for(errors, 'passing_year') }}
+            </div>
+            <div class="form-field">
+                <label for="score">Percentage / CGPA Score <span class="required">*</span></label>
+                <input type="number" id="score" name="score" value="{{ form.get('score', '') }}" min="0" max="100" step="0.01" required
+                       {% if errors.get('score') %}aria-invalid="true" aria-describedby="score-error"{% endif %}>
+                <p class="helper-text">Enter a percentage between 0 and 100. CGPA must be converted to percentage.</p>
+                {{ error_for(errors, 'score') }}
+            </div>
+            <div class="form-field">
+                <label for="backlog_count">Backlog Count <span class="required">*</span></label>
+                <input type="number" id="backlog_count" name="backlog_count" value="{{ form.get('backlog_count', 0) }}" min="0" step="1" required
+                       {% if errors.get('backlog_count') %}aria-invalid="true" aria-describedby="backlog_count-error"{% endif %}>
+                {{ error_for(errors, 'backlog_count') }}
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Skills</h2><p class="muted">Primary technology is used for job eligibility matching.</p></div></div>
+        <div class="form-grid form-grid--three">
+            <div class="form-field">
+                <label for="primary_technology">Primary Technology <span class="required">*</span></label>
+                <select id="primary_technology" name="primary_technology" required>
+                    <option value="">Select technology</option>
+                    {{ select_options(technologies, form.get('primary_technology', '')) }}
+                </select>
+                {{ error_for(errors, 'primary_technology') }}
+            </div>
+            <div class="form-field">
+                <label for="secondary_skills">Secondary Skills</label>
+                <input type="text" id="secondary_skills" name="secondary_skills" value="{{ form.get('secondary_skills', '') }}"
+                       placeholder="e.g. SQL, Spring Boot, Selenium">
+                <p class="helper-text">Comma-separated skills.</p>
+                {{ error_for(errors, 'secondary_skills') }}
+            </div>
+            <div class="form-field">
+                <label for="skill_level">Skill Level <span class="required">*</span></label>
+                <select id="skill_level" name="skill_level" required>
+                    {{ select_options(skill_levels, form.get('skill_level', 'Intermediate')) }}
+                </select>
+                {{ error_for(errors, 'skill_level') }}
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Placement Preferences</h2><p class="muted">Location preferences help matching candidates to openings.</p></div></div>
+        <div class="form-grid form-grid--two">
+            <div class="form-field">
+                <label for="current_location">Current Location</label>
+                <input type="text" id="current_location" name="current_location" value="{{ form.get('current_location', '') }}">
+                {{ error_for(errors, 'current_location') }}
+            </div>
+            <div class="form-field">
+                <label for="preferred_location">Preferred Location</label>
+                <input type="text" id="preferred_location" name="preferred_location" value="{{ form.get('preferred_location', '') }}">
+                {{ error_for(errors, 'preferred_location') }}
+            </div>
+        </div>
+    </section>
+
+    <div class="sticky-actions">
+        <button type="submit" class="btn btn-primary">{{ "Update Candidate" if mode == 'edit' else "Save Candidate" }}</button>
+        <a class="btn btn-outline" href="{{ url_for('candidates') }}">Cancel</a>
+        <a class="text-link" href="{{ url_for('candidates') }}">Back to Candidate List</a>
+    </div>
+</form>
+{% endblock %}

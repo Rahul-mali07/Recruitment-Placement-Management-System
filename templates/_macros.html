@@ -1,0 +1,77 @@
+{% macro csrf_field() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro badge(value, extra='') -%}
+{% if value %}
+<span class="badge badge--{{ value|lower|replace('_', '-') }} {{ extra }}">{{ value|status_label }}</span>
+{% else %}
+<span class="muted">—</span>
+{% endif %}
+{%- endmacro %}
+
+{% macro error_for(errors, name) -%}
+{% if errors and errors.get(name) %}
+<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>
+{% endif %}
+{%- endmacro %}
+
+{% macro empty_row(colspan, message) -%}
+<tr><td colspan="{{ colspan }}" class="empty-state">{{ message }}</td></tr>
+{%- endmacro %}
+
+{% macro candidate_pagination(result, filters) -%}
+{% if result.pages > 1 %}
+<nav class="pagination" aria-label="Candidate pages">
+    {% if result.page > 1 %}
+    <a class="page-link" href="{{ url_for('candidates', page=result.page - 1, **filters) }}" rel="prev">Previous</a>
+    {% else %}
+    <span class="page-link is-disabled">Previous</span>
+    {% endif %}
+    <span class="page-status">Page {{ result.page }} of {{ result.pages }}</span>
+    {% if result.page < result.pages %}
+    <a class="page-link" href="{{ url_for('candidates', page=result.page + 1, **filters) }}" rel="next">Next</a>
+    {% else %}
+    <span class="page-link is-disabled">Next</span>
+    {% endif %}
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{% macro select_options(options, selected, placeholder=None) -%}
+{% if placeholder %}<option value="">{{ placeholder }}</option>{% endif %}
+{% for option in options %}
+<option value="{{ option }}" {% if option == selected %}selected{% endif %}>{{ option }}</option>
+{% endfor %}
+{%- endmacro %}
+
+{% macro nav_icon(key) -%}
+<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+    {% if key == 'dashboard' %}
+    <rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/>
+    <rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>
+    {% elif key == 'candidates' %}
+    <circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.4-3.4 2.6-5.4 5.5-5.4s5.1 2 5.5 5.4"/>
+    <path d="M16.2 5.2a2.8 2.8 0 0 1 0 5.4M17.5 14.9c2.1.4 3.4 2.1 3.7 4.5"/>
+    {% elif key == 'companies' %}
+    <path d="M4 20.5V7.5L12 3l8 4.5v13"/><path d="M2.5 20.5h19"/>
+    <path d="M9 20.5v-5h6v5"/><path d="M8.5 9.5h.01M12 9.5h.01M15.5 9.5h.01M8.5 12.8h.01M12 12.8h.01M15.5 12.8h.01"/>
+    {% elif key == 'jobs' %}
+    <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/>
+    <path d="M3 12.5c3 1.5 6.2 2.2 9 2.2s6-.7 9-2.2"/><path d="M10.5 14v2h3v-2"/>
+    {% elif key == 'applications' %}
+    <path d="M7 3.5h7l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 20V5a1.5 1.5 0 0 1 1-1.5Z"/>
+    <path d="M14 3.5V8h4.5"/><path d="M9 12h6M9 15.5h6M9 8.5h2"/>
+    {% elif key == 'interviews' %}
+    <rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>
+    <path d="M8 13h2M14 13h2M8 17h2M14 17h2"/>
+    {% elif key == 'placement' %}
+    <path d="M4 18.5V14l5-2 3 2 8-9"/><path d="M15.5 5H20v4.5"/>
+    <path d="M4 5v15h16"/>
+    {% elif key == 'reports' %}
+    <path d="M4 20V4"/><path d="M4 20h16"/><rect x="7.5" y="12" width="3" height="5"/>
+    <rect x="12.5" y="8" width="3" height="9"/><rect x="17" y="10" width="3" height="7"/>
+    {% endif %}
+</svg>
+{%- endmacro %}

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field, badge, empty_row, error_for, select_options %}
+{% block title %}Interviews{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Interviews</span></nav>
+<div class="page-heading">
+    <div>
+        <h1>Interviews</h1>
+        <p class="page-subtitle">Schedule, reschedule and record interview outcomes. New interviews must be dated today or later.</p>
+    </div>
+</div>
+
+<div class="grid grid--two-thirds">
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <h2>{{ "Reschedule Interview" if rescheduling else "Schedule Interview" }}</h2>
+                <p class="muted">
+                    {% if rescheduling %}
+                    Updating existing record {{ rescheduling.interview_code }} for {{ rescheduling.candidate_name }}.
+                    {% else %}
+                    The candidate must have an eligible or shortlisted application for the selected job.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% if errors %}
+        <div class="alert alert--error"><strong>Please correct the highlighted fields.</strong></div>
+        {% endif %}
+        <form method="post" action="{{ url_for('interview_reschedule') if rescheduling else url_for('interview_schedule') }}" class="form-stack" novalidate>
+            {{ csrf_field() }}
+            {% if rescheduling %}<input type="hidden" name="interview_id" value="{{ rescheduling.id }}">{% endif %}
+            <div class="form-grid form-grid--two">
+                <div class="form-field">
+                    <label for="candidate_id">Candidate <span class="required">*</span></label>
+                    <select id="candidate_id" name="candidate_id" required {% if rescheduling %}disabled{% endif %}>
+                        <option value="">Select candidate</option>
+                        {% for candidate in candidates %}
+                        <option value="{{ candidate.id }}" {% if form.get('candidate_id')|string == candidate.id|string %}selected{% endif %}>{{ candidate.candidate_code }} &middot; {{ candidate.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if rescheduling %}<input type="hidden" name="candidate_id" value="{{ form.get('candidate_id') }}">{% endif %}
+                    {{ error_for(errors, 'candidate_id') }}
+                </div>
+                <div class="form-field">
+                    <label for="company_id">Company <span class="required">*</span></label>
+                    <select id="company_id" name="company_id" required {% if rescheduling %}disabled{% endif %}>
+                        <option value="">Select company</option>
+                        {% for company in companies %}
+                        <option value="{{ company.id }}" {% if form.get('company_id')|string == company.id|string %}selected{% endif %}>{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if rescheduling %}<input type="hidden" name="company_id" value="{{ form.get('company_id') }}">{% endif %}
+                    {{ error_for(errors, 'company_id') }}
+                </div>
+                <div class="form-field">
+                    <label for="job_id">Job <span class="required">*</span></label>
+                    <select id="job_id" name="job_id" required {% if rescheduling %}disabled{% endif %}>
+                        <option value="">Select job</option>
+                        {% for job in jobs %}
+                        <option value="{{ job.id }}" {% if form.get('job_id')|string == job.id|string %}selected{% endif %}>{{ job.job_code }} &middot; {{ job.title }} &middot; {{ job.company_name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if rescheduling %}<input type="hidden" name="job_id" value="{{ form.get('job_id') }}">{% endif %}
+                    {{ error_for(errors, 'job_id') }}
+                </div>
+                <div class="form-field">
+                    <label for="round">Interview Round <span class="required">*</span></label>
+                    <select id="round" name="round" required>
+                        {{ select_options(interview_rounds, form.get('round', 'Technical')) }}
+                    </select>
+                    {{ error_for(errors, 'round') }}
+                </div>
+                <div class="form-field">
+                    <label for="interview_date">Interview Date <span class="required">*</span></label>
+                    <input type="date" id="interview_date" name="interview_date" value="{{ form.get('interview_date', '') }}" min="{{ today_iso }}" required>
+                    {{ error_for(errors, 'interview_date') }}
+                </div>
+                <div class="form-field">
+                    <label for="interview_time">Interview Time <span class="required">*</span></label>
+                    <input type="time" id="interview_time" name="interview_time" value="{{ form.get('interview_time', '') }}" required>
+                    {{ error_for(errors, 'interview_time') }}
+                </div>
+                <div class="form-field">
+                    <label for="mode">Mode <span class="required">*</span></label>
+                    <select id="mode" name="mode" required>
+                        {{ select_options(interview_modes, form.get('mode', 'Online')) }}
+                    </select>
+                    {{ error_for(errors, 'mode') }}
+                </div>
+                <div class="form-field">
+                    <label for="interviewer_name">Interviewer Name</label>
+                    <input type="text" id="interviewer_name" name="interviewer_name" value="{{ form.get('interviewer_name', '') }}">
+                    {{ error_for(errors, 'interviewer_name') }}
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{{ "Reschedule" if rescheduling else "Schedule" }}</button>
+                {% if rescheduling %}<a class="btn btn-outline" href="{{ url_for('interviews') }}">Cancel reschedule</a>{% endif %}
+            </div>
+        </form>
+    </section>
+
+    <div class="stack">
+        <section class="card">
+            <div class="card-header"><h2>Today's interviews</h2></div>
+            <ul class="compact-list">
+                {% for item in today_list %}
+                <li>
+                    <strong>{{ item.interview_time|time_display }}</strong>
+                    <span>{{ item.candidate_name }}</span>
+                    <span class="muted">{{ item.company_name }} &middot; {{ item.round }}</span>
+                </li>
+                {% else %}
+                <li class="empty-state">No interviews scheduled for today.</li>
+                {% endfor %}
+            </ul>
+        </section>
+        <section class="card">
+            <div class="card-header"><h2>Upcoming interviews</h2></div>
+            <ul class="compact-list">
+                {% for item in upcoming %}
+                <li>
+                    <strong>{{ item.interview_date|date_display }}</strong>
+                    <span>{{ item.candidate_name }}</span>
+                    <span class="muted">{{ item.company_name }} &middot; {{ item.round }} &middot; {{ item.interview_time|time_display }}</span>
+                </li>
+                {% else %}
+                <li class="empty-state">No upcoming interviews.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+</div>
+
+<section class="card filter-card">
+    <form method="get" action="{{ url_for('interviews') }}" class="filter-grid filter-grid--compact">
+        <div class="form-field">
+            <label for="q">Search</label>
+            <input type="text" id="q" name="q" value="{{ filters.q }}" placeholder="Candidate, company, job or interview ID">
+        </div>
+        <div class="form-field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                <option value="">All statuses</option>
+                {% for status in interview_statuses %}
+                <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status|status_label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="date_from">Date From</label>
+            <input type="date" id="date_from" name="date_from" value="{{ filters.date_from }}">
+        </div>
+        <div class="form-field">
+            <label for="date_to">Date To</label>
+            <input type="date" id="date_to" name="date_to" value="{{ filters.date_to }}">
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a class="btn btn-outline" href="{{ url_for('interviews') }}">Reset</a>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <div class="card-header">
+        <div><h2>Interview results</h2><p class="muted">{{ interviews|length }} interview{{ '' if interviews|length == 1 else 's' }} match the filters.</p></div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Interview ID</th><th>Candidate</th><th>Company</th><th>Job</th><th>Round</th>
+                    <th>Date</th><th>Time</th><th>Mode</th><th>Interviewer</th><th>Status</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in interviews %}
+                <tr>
+                    <td class="mono">{{ item.interview_code }}</td>
+                    <td><a href="{{ url_for('candidate_details', candidate_id=item.candidate_id) }}">{{ item.candidate_name }}</a></td>
+                    <td>{{ item.company_name }}</td>
+                    <td>{{ item.job_code }}<br><span class="muted">{{ item.job_title }}</span></td>
+                    <td>{{ item.round }}</td>
+                    <td>{{ item.interview_date|date_display }}</td>
+                    <td>{{ item.interview_time|time_display }}</td>
+                    <td>{{ item.mode }}</td>
+                    <td>{{ item.interviewer_name or "—" }}</td>
+                    <td>{{ badge(item.status) }}</td>
+                    <td class="actions-cell actions-cell--stack">
+                        {% if item.status in ['SCHEDULED', 'RESCHEDULED'] %}
+                        <a class="btn btn-link btn-sm" href="{{ url_for('interviews', reschedule=item.id) }}">Reschedule</a>
+                        <form method="post" action="{{ url_for('interview_no_show', interview_id=item.id) }}" class="inline-form">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="next" value="{{ request.full_path }}">
+                            <button type="submit" class="btn btn-link btn-sm btn-link--danger">Mark No Show</button>
+                        </form>
+                        {% endif %}
+                        <a class="btn btn-link btn-sm" href="{{ url_for('placement_process', interview_id=item.id) }}">Add Feedback</a>
+                    </td>
+                </tr>
+                {% else %}
+                {{ empty_row(11, "No interviews match the selected filters.") }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

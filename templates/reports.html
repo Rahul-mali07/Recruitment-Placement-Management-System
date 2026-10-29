@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty_row %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Reports</span></nav>
+<div class="page-heading">
+    <div>
+        <h1>Reports</h1>
+        <p class="page-subtitle">Management metrics calculated from the current database. date filters use the application applied date.</p>
+    </div>
+    <div class="page-actions no-print">
+        {% if print_mode %}
+        <a class="btn btn-outline" href="{{ url_for('reports', **export_filters) }}">Back to Reports</a>
+        {% else %}
+        <a class="btn btn-outline" href="{{ url_for('reports_print', **export_filters) }}" target="_blank" rel="noopener">Print View</a>
+        <a class="btn btn-primary" href="{{ url_for('reports_export', **export_filters) }}">Export CSV</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if print_mode %}
+<p class="report-definition no-print">Print view uses the selected filters. Use your browser's Print command (Ctrl+P).</p>
+{% else %}
+<section class="card filter-card no-print">
+    <form method="get" action="{{ url_for('reports') }}" class="filter-grid">
+        <div class="form-field">
+            <label for="date_from">Date From</label>
+            <input type="date" id="date_from" name="date_from" value="{{ filters.date_from }}">
+        </div>
+        <div class="form-field">
+            <label for="date_to">Date To</label>
+            <input type="date" id="date_to" name="date_to" value="{{ filters.date_to }}">
+        </div>
+        <div class="form-field">
+            <label for="technology">Technology</label>
+            <select id="technology" name="technology">
+                <option value="">All technologies</option>
+                {% for technology in technologies %}
+                <option value="{{ technology }}" {% if filters.technology == technology %}selected{% endif %}>{{ technology }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="company_id">Company</label>
+            <select id="company_id" name="company_id">
+                <option value="">All companies</option>
+                {% for company in companies %}
+                <option value="{{ company.id }}" {% if filters.company_id == company.id %}selected{% endif %}>{{ company.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="recruiter_id">Recruiter</label>
+            <select id="recruiter_id" name="recruiter_id">
+                <option value="">All recruiters</option>
+                {% for recruiter in recruiters %}
+                <option value="{{ recruiter.id }}" {% if filters.recruiter_id == recruiter.id %}selected{% endif %}>{{ recruiter.full_name }} ({{ recruiter.role|status_label }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="passing_year">Passing Year</label>
+            <input type="number" id="passing_year" name="passing_year" value="{{ filters.passing_year }}" min="1980" max="2100" placeholder="e.g. 2025">
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a class="btn btn-outline" href="{{ url_for('reports') }}">Reset</a>
+        </div>
+    </form>
+</section>
+{% endif %}
+
+<div class="kpi-grid">
+    <div class="metric-card"><span class="metric-label">Applications</span><span class="metric-value">{{ metrics.applications }}</span><span class="metric-hint">Matching applied date range</span></div>
+    <div class="metric-card"><span class="metric-label">Interviews</span><span class="metric-value">{{ metrics.interviews }}</span><span class="metric-hint">Linked to matching applications</span></div>
+    <div class="metric-card"><span class="metric-label">Selected</span><span class="metric-value">{{ metrics.selected }}</span><span class="metric-hint">Status SELECTED</span></div>
+    <div class="metric-card"><span class="metric-label">Joined</span><span class="metric-value">{{ metrics.joined }}</span><span class="metric-hint">Joining status JOINED</span></div>
+    <div class="metric-card"><span class="metric-label">Placement %</span><span class="metric-value">{{ metrics.placement_percentage }}%</span><span class="metric-hint">Joined ÷ applications</span></div>
+</div>
+
+<p class="report-definition">Placement percentage = confirmed joinings ÷ matching applications. Offer-to-join conversion = confirmed joinings ÷ accepted offers ({{ metrics.offer_to_join }}% for this selection).</p>
+
+<div class="grid grid--two">
+    <section class="card">
+        <div class="card-header"><div><h2>Recruitment Funnel</h2><p class="muted">Stage counts for the filtered applications.</p></div></div>
+        <div class="report-bars">
+            {% for stage in funnel %}
+            <div class="report-bar-row">
+                <span>{{ stage.label }}</span>
+                <progress max="100" value="{{ stage.percent }}">{{ stage.percent }}%</progress>
+                <strong>{{ stage.count }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Company-wise Placement</h2><p class="muted">Applications, selections and confirmed joinings.</p></div></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Company</th><th>Applications</th><th>Selected</th><th>Joined</th><th>Placement %</th></tr></thead>
+                <tbody>
+                    {% for item in company_stats %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.applications }}</td>
+                        <td>{{ item.selected }}</td>
+                        <td>{{ item.joined }}</td>
+                        <td><div class="mini-bar"><progress max="100" value="{{ item.placement_percentage }}"></progress><span>{{ item.placement_percentage }}%</span></div></td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(5, "No matching company data.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="grid grid--two">
+    <section class="card">
+        <div class="card-header"><div><h2>Technology-wise Placement</h2><p class="muted">Placement outcomes by job technology.</p></div></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Technology</th><th>Applications</th><th>Selected</th><th>Joined</th><th>Placement %</th></tr></thead>
+                <tbody>
+                    {% for item in technology_stats %}
+                    <tr>
+                        <td>{{ item.technology }}</td>
+                        <td>{{ item.applications }}</td>
+                        <td>{{ item.selected }}</td>
+                        <td>{{ item.joined }}</td>
+                        <td><div class="mini-bar"><progress max="100" value="{{ item.placement_percentage }}"></progress><span>{{ item.placement_percentage }}%</span></div></td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(5, "No matching technology data.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Recruiter Performance</h2><p class="muted">Based on recorded application assignments only.</p></div></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Recruiter</th><th>Applications</th><th>Shortlisted</th><th>Selected</th><th>Joined</th></tr></thead>
+                <tbody>
+                    {% for item in recruiter_stats %}
+                    <tr>
+                        <td>{{ item.recruiter_name }}</td>
+                        <td>{{ item.applications }}</td>
+                        <td>{{ item.shortlisted }}</td>
+                        <td>{{ item.selected }}</td>
+                        <td>{{ item.joined }}</td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(5, "No recruiter assignments in this selection.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="grid grid--two">
+    <section class="card">
+        <div class="card-header"><div><h2>Pending Interviews</h2><p class="muted">Future interviews with SCHEDULED or RESCHEDULED status.</p></div></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Candidate</th><th>Company</th><th>Round</th><th>Date</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for item in pending %}
+                    <tr>
+                        <td>{{ item.candidate_name }}</td>
+                        <td>{{ item.company_name }}</td>
+                        <td>{{ item.round }}</td>
+                        <td>{{ item.interview_date|date_display }}<br><span class="muted">{{ item.interview_time|time_display }}</span></td>
+                        <td>{{ badge(item.status) }}</td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(5, "No pending interviews for this selection.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Open Job Aging</h2><p class="muted">Days between posted date and today for open jobs. Company and technology filters apply.</p></div></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Job Code</th><th>Company</th><th>Technology</th><th>Posted</th><th>Age</th></tr></thead>
+                <tbody>
+                    {% for item in open_jobs %}
+                    <tr>
+                        <td class="mono">{{ item.job_code }}</td>
+                        <td>{{ item.company_name }}</td>
+                        <td>{{ item.technology }}</td>
+                        <td>{{ item.posted_date|date_display }}</td>
+                        <td><span class="badge {% if item.age_days > 60 %}badge--error{% elif item.age_days > 30 %}badge--warning{% else %}badge--success{% endif %}">{{ item.age_days }} days</span></td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(5, "No open jobs match the selection.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<section class="card reference-card">
+    <div class="card-header">
+        <div>
+            <h2>Reference figures from the assignment brief</h2>
+            <p class="muted">Illustrative only. These are not calculated from the database and may not match the live metrics above.</p>
+        </div>
+        <span class="badge badge--info">Illustrative</span>
+    </div>
+    <div class="reference-grid reference-grid--six">
+        <div><span>Applications</span><strong>1,200</strong></div>
+        <div><span>Shortlisted</span><strong>760</strong></div>
+        <div><span>Interviewed</span><strong>480</strong></div>
+        <div><span>Selected</span><strong>210</strong></div>
+        <div><span>Joined</span><strong>175</strong></div>
+        <div><span>Offer-to-Join</span><strong>83.3%</strong></div>
+    </div>
+</section>
+<p class="print-note">For a printed copy, use your browser's Print command (Ctrl+P). The print layout hides navigation, filters and action buttons.</p>
+{% endblock %}

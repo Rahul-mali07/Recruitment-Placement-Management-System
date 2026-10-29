@@ -1,0 +1,93 @@
+{% from "_macros.html" import csrf_field, error_for %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in | Kiran Academy Placement</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page">
+<main class="auth-shell">
+    <section class="auth-panel auth-panel--intro">
+        <a class="brand brand--light" href="{{ url_for('login') }}">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" width="44" height="44">
+            <span class="brand-text">
+                <span class="brand-name">Kiran Academy</span>
+                <span class="brand-subtitle">Recruitment &amp; Placement Management System</span>
+            </span>
+        </a>
+        <div class="auth-copy">
+            <p class="eyebrow">Placement operations</p>
+            <h1>One workspace for every placement journey.</h1>
+            <p>Manage candidates, company relationships, job openings, interviews and joining outcomes with a clear, auditable workflow.</p>
+            <ul class="auth-points">
+                <li>Candidate and company records</li>
+                <li>Eligibility checks and interview scheduling</li>
+                <li>Offers, joining and placement reporting</li>
+            </ul>
+        </div>
+        <p class="auth-footnote">Authorized users only. Activity is recorded for audit purposes.</p>
+    </section>
+
+    <section class="auth-panel auth-panel--form">
+        <div class="auth-form-wrap">
+            <h2>Sign in</h2>
+            <p class="muted">Use your academy account to access the placement workspace.</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-stack">
+                {% for category, message in messages %}
+                <div class="alert alert--{{ category if category in ['success', 'error', 'warning', 'info'] else 'info' }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% if errors.get('form') %}
+            <div class="alert alert--error" role="alert">{{ errors['form'] }}</div>
+            {% endif %}
+
+            <form method="post" action="{{ url_for('login', next=request.args.get('next')) }}" class="form-stack" novalidate>
+                {{ csrf_field() }}
+                <div class="form-field">
+                    <label for="identifier">Username or email <span class="required">*</span></label>
+                    <input type="text" id="identifier" name="identifier" value="{{ form.get('identifier', '') }}"
+                           autocomplete="username" required
+                           {% if errors.get('identifier') %}aria-invalid="true" aria-describedby="identifier-error"{% endif %}>
+                    {{ error_for(errors, 'identifier') }}
+                </div>
+                <div class="form-field">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required
+                           {% if errors.get('password') %}aria-invalid="true" aria-describedby="password-error"{% endif %}>
+                    {{ error_for(errors, 'password') }}
+                </div>
+                <div class="form-field">
+                    <label for="role">Role <span class="required">*</span></label>
+                    <select id="role" name="role" required>
+                        {% for value, label in role_labels.items() %}
+                        <option value="{{ value }}" {% if form.get('role', 'ADMIN') == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <p class="helper-text">Your stored account role is always verified. Selecting a role does not grant access.</p>
+                    {{ error_for(errors, 'role') }}
+                </div>
+                <div class="form-actions form-actions--spread">
+                    <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+                    <button type="reset" class="btn btn-outline">Reset</button>
+                </div>
+                <div class="auth-links">
+                    <a href="{{ url_for('forgot_password') }}">Forgot password?</a>
+                    <span class="muted">Authorized users only</span>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+</body>
+</html>

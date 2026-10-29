@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field, badge, error_for, select_options %}
+{% block title %}Selection, Offer & Placement{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Placement Process</span></nav>
+<div class="page-heading">
+    <div>
+        <h1>Selection, Offer &amp; Placement</h1>
+        <p class="page-subtitle">Record interview feedback, issue offers, confirm joining and mark candidates as placed.</p>
+    </div>
+    <div class="page-actions">
+        {% if can_access('reports') %}<a class="btn btn-outline" href="{{ url_for('reports') }}">View Reports</a>{% endif %}
+        <a class="btn btn-ghost" href="{{ url_for('interviews') }}">Interviews</a>
+    </div>
+</div>
+
+<section class="card">
+    <div class="card-header">
+        <div><h2>Select a candidate workflow</h2><p class="muted">Choose a selected application or an application that already has an offer.</p></div>
+    </div>
+    <form method="get" action="{{ url_for('placement_process') }}" class="inline-create-form">
+        <div class="form-field">
+            <label for="application_id">Selected application</label>
+            <select id="application_id" name="application_id">
+                <option value="">Select application</option>
+                {% for app in applications %}
+                <option value="{{ app.id }}" {% if application and application.id == app.id %}selected{% endif %}>
+                    {{ app.application_code }} &middot; {{ app.candidate_name }} &middot; {{ app.job_code }} ({{ app.company_name }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field form-field--action">
+            <button type="submit" class="btn btn-primary">Open Workflow</button>
+        </div>
+        {% if not applications %}
+        <p class="helper-text">No selected applications yet. Shortlist a candidate, add interview feedback with result SELECTED, then return here.</p>
+        {% endif %}
+    </form>
+</section>
+
+{% if application %}
+<section class="selection-banner">
+    <div>
+        <p class="eyebrow">{{ application.application_code }}</p>
+        <h2>{{ application.candidate_name }} <span class="muted mono">{{ application.candidate_code }}</span></h2>
+        <p>{{ application.job_code }} &middot; {{ application.job_title }} &middot; {{ application.company_name }}</p>
+        <div class="badge-row">
+            {{ badge(application.status) }}
+            {{ badge(application.eligibility_status) }}
+            {% if offer %}{{ badge(offer.offer_status) }}{{ badge(offer.joining_status) }}{% endif %}
+        </div>
+    </div>
+    <div class="selection-links">
+        <a class="text-link" href="{{ url_for('candidate_details', candidate_id=application.candidate_id) }}">Candidate profile</a>
+        <a class="text-link" href="{{ url_for('application_history', application_id=application.id) }}">Application history</a>
+        <span class="muted">Offer: {% if offer %}{{ "%g"|format(offer.offered_package) }} LPA{% else %}Not created{% endif %}</span>
+    </div>
+</section>
+
+<div class="grid grid--two">
+    <section class="card">
+        <div class="card-header">
+            <div><h2>1. Interview Feedback</h2><p class="muted">Feedback is linked to the selected interview and application.</p></div>
+        </div>
+        {% if interviews %}
+        <div class="chip-list">
+            {% for item in interviews %}
+            <a class="chip {% if interview and interview.id == item.id %}is-active{% endif %}"
+               href="{{ url_for('placement_process', interview_id=item.id) }}">
+                {{ item.interview_code }} &middot; {{ item.round }} &middot; {{ item.interview_date|date_display }}
+                <span>{{ item.interview_result|status_label if item.interview_result else item.status|status_label }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if interview %}
+        {% if errors and form %}
+        <div class="alert alert--error"><strong>Please correct the feedback fields.</strong></div>
+        {% endif %}
+        <form method="post" action="{{ url_for('placement_feedback') }}" class="form-stack" novalidate>
+            {{ csrf_field() }}
+            <input type="hidden" name="interview_id" value="{{ interview.id }}">
+            <div class="rating-grid">
+                <div class="form-field">
+                    <label for="technical_rating">Technical Rating</label>
+                    <select id="technical_rating" name="technical_rating">
+                        <option value="">Not rated</option>
+                        {% for value in range(1, 6) %}
+                        <option value="{{ value }}" {% if (form.get('technical_rating') or (feedback.technical_rating if feedback else ''))|string == value|string %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                    {{ error_for(errors, 'technical_rating') }}
+                </div>
+                <div class="form-field">
+                    <label for="communication_rating">Communication Rating</label>
+                    <select id="communication_rating" name="communication_rating">
+                        <option value="">Not rated</option>
+                        {% for value in range(1, 6) %}
+                        <option value="{{ value }}" {% if (form.get('communication_rating') or (feedback.communication_rating if feedback else ''))|string == value|string %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                    {{ error_for(errors, 'communication_rating') }}
+                </div>
+                <div class="form-field">
+                    <label for="problem_solving_rating">Problem Solving Rating</label>
+                    <select id="problem_solving_rating" name="problem_solving_rating">
+                        <option value="">Not rated</option>
+                        {% for value in range(1, 6) %}
+                        <option value="{{ value }}" {% if (form.get('problem_solving_rating') or (feedback.problem_solving_rating if feedback else ''))|string == value|string %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                    {{ error_for(errors, 'problem_solving_rating') }}
+                </div>
+                <div class="form-field">
+                    <label for="overall_rating">Overall Rating</label>
+                    <select id="overall_rating" name="overall_rating">
+                        <option value="">Not rated</option>
+                        {% for value in range(1, 6) %}
+                        <option value="{{ value }}" {% if (form.get('overall_rating') or (feedback.overall_rating if feedback else ''))|string == value|string %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                    {{ error_for(errors, 'overall_rating') }}
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="remarks">Feedback Remarks</label>
+                <textarea id="remarks" name="remarks" rows="3">{{ form.get('remarks') if form and form.get('remarks') is not none else (feedback.remarks if feedback and feedback.remarks else '') }}</textarea>
+                {{ error_for(errors, 'remarks') }}
+            </div>
+            <div class="form-field">
+                <label for="interview_result">Interview Result <span class="required">*</span></label>
+                <select id="interview_result" name="interview_result" required>
+                    <option value="">Select result</option>
+                    {% set current_result = form.get('interview_result') if form and form.get('interview_result') else (feedback.interview_result if feedback else '') %}
+                    <option value="NEXT_ROUND" {% if current_result == 'NEXT_ROUND' %}selected{% endif %}>Next Round</option>
+                    <option value="SELECTED" {% if current_result == 'SELECTED' %}selected{% endif %}>Selected</option>
+                    <option value="REJECTED" {% if current_result == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                    <option value="ON_HOLD" {% if current_result == 'ON_HOLD' %}selected{% endif %}>On Hold</option>
+                </select>
+                <p class="helper-text">SELECTED moves the application to the offer stage. REJECTED closes the application.</p>
+                {{ error_for(errors, 'interview_result') }}
+            </div>
+            <div class="form-actions"><button type="submit" class="btn btn-primary">Save Feedback</button></div>
+        </form>
+        {% else %}
+        <p class="empty-state">Select an interview above to add or update feedback. If none exists, schedule one from the Interviews page.</p>
+        {% endif %}
+    </section>
+
+    <section class="card">
+        <div class="card-header">
+            <div><h2>2. Offer Details</h2><p class="muted">An offer can be created only for a selected application.</p></div>
+        </div>
+        {% if application.status != 'SELECTED' %}
+        <div class="alert alert--warning">This application is {{ application.status|status_label }}. Record a SELECTED interview result before creating an offer.</div>
+        {% elif offer %}
+        <div class="callout">
+            <strong>{{ offer.designation }}</strong>
+            <span>{{ "%g"|format(offer.offered_package) }} LPA &middot; Offer {{ offer.offer_date|date_display }} &middot; Expected joining {{ offer.expected_joining_date|date_display }}</span>
+        </div>
+        <form method="post" action="{{ url_for('placement_offer_status') }}" class="form-stack">
+            {{ csrf_field() }}
+            <input type="hidden" name="application_id" value="{{ application.id }}">
+            <div class="form-field">
+                <label for="offer_status">Offer Status</label>
+                <select id="offer_status" name="offer_status" required>
+                    {% for status in offer_statuses %}
+                    <option value="{{ status }}" {% if offer.offer_status == status %}selected{% endif %}>{{ status|status_label }}</option>
+                    {% endfor %}
+                </select>
+                <p class="helper-text">Allowed next state: {% if offer.offer_status == 'OFFERED' %}Accepted, Rejected, Expired or Withdrawn.{% else %}This status is final.{% endif %}</p>
+            </div>
+            <div class="form-actions"><button type="submit" class="btn btn-primary">Update Offer Status</button></div>
+        </form>
+        {% else %}
+        {% if errors and not interview %}
+        <div class="alert alert--error"><strong>Please correct the offer fields.</strong></div>
+        {% endif %}
+        <form method="post" action="{{ url_for('placement_offer') }}" class="form-stack" novalidate>
+            {{ csrf_field() }}
+            <input type="hidden" name="application_id" value="{{ application.id }}">
+            <div class="form-field">
+                <label for="designation">Designation <span class="required">*</span></label>
+                <input type="text" id="designation" name="designation" value="{{ offer_form.get('designation', application.job_title) }}" required>
+                {{ error_for(errors, 'designation') }}
+            </div>
+            <div class="form-field">
+                <label for="offered_package">Offered Package (LPA) <span class="required">*</span></label>
+                <input type="number" id="offered_package" name="offered_package" value="{{ offer_form.get('offered_package', '') }}" min="0.01" step="0.1" required>
+                {{ error_for(errors, 'offered_package') }}
+            </div>
+            <div class="form-grid form-grid--two">
+                <div class="form-field">
+                    <label for="offer_date">Offer Date <span class="required">*</span></label>
+                    <input type="date" id="offer_date" name="offer_date" value="{{ offer_form.get('offer_date', today_iso) }}" required>
+                    {{ error_for(errors, 'offer_date') }}
+                </div>
+                <div class="form-field">
+                    <label for="expected_joining_date">Expected Joining Date</label>
+                    <input type="date" id="expected_joining_date" name="expected_joining_date" value="{{ offer_form.get('expected_joining_date', '') }}">
+                    {{ error_for(errors, 'expected_joining_date') }}
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="offer_status_new">Offer Status</label>
+                <select id="offer_status_new" name="offer_status">
+                    {{ select_options(offer_statuses, offer_form.get('offer_status', 'OFFERED')) }}
+                </select>
+                {{ error_for(errors, 'offer_status') }}
+            </div>
+            <div class="form-actions"><button type="submit" class="btn btn-primary">Create Offer</button></div>
+        </form>
+        {% endif %}
+    </section>
+</div>
+
+<section class="card">
+    <div class="card-header">
+        <div><h2>3. Joining / Placement</h2><p class="muted">Confirm the candidate has joined before marking the placement complete.</p></div>
+    </div>
+    {% if not offer %}
+    <p class="empty-state">Create an offer first. Joining can only be confirmed for an accepted offer.</p>
+    {% elif offer.offer_status != 'ACCEPTED' %}
+    <div class="alert alert--warning">The offer is currently {{ offer.offer_status|status_label }}. Joining can only be confirmed after the offer is accepted.</div>
+    {% else %}
+    <div class="grid grid--two">
+        <form method="post" action="{{ url_for('placement_joining') }}" class="form-stack" novalidate>
+            {{ csrf_field() }}
+            <input type="hidden" name="application_id" value="{{ application.id }}">
+            <div class="form-grid form-grid--two">
+                <div class="form-field">
+                    <label for="joining_status">Joining Status</label>
+                    <select id="joining_status" name="joining_status" required>
+                        <option value="NOT_JOINED" {% if offer.joining_status == 'NOT_JOINED' %}selected{% endif %}>Not Joined</option>
+                        <option value="JOINED" {% if offer.joining_status == 'JOINED' %}selected{% endif %}>Joined</option>
+                        <option value="DEFERRED" {% if offer.joining_status == 'DEFERRED' %}selected{% endif %}>Deferred</option>
+                        <option value="NO_SHOW" {% if offer.joining_status == 'NO_SHOW' %}selected{% endif %}>No Show</option>
+                    </select>
+                    {{ error_for(errors, 'joining_status') }}
+                </div>
+                <div class="form-field">
+                    <label for="actual_joining_date">Actual Joining Date</label>
+                    <input type="date" id="actual_joining_date" name="actual_joining_date"
+                           value="{{ joining_form.get('actual_joining_date', offer.actual_joining_date or '') }}" max="{{ today_iso }}">
+                    <p class="helper-text">Required when joining status is JOINED. Cannot be in the future.</p>
+                    {{ error_for(errors, 'actual_joining_date') }}
+                </div>
+            </div>
+            <div class="form-actions"><button type="submit" class="btn btn-primary">Confirm Joining</button></div>
+        </form>
+        <div class="placement-summary">
+            <h3>Placement readiness</h3>
+            <ul class="checklist">
+                <li class="{% if application.status == 'SELECTED' %}is-done{% endif %}">Application selected</li>
+                <li class="{% if offer.offer_status == 'ACCEPTED' %}is-done{% endif %}">Offer accepted</li>
+                <li class="{% if offer.joining_status == 'JOINED' and offer.actual_joining_date %}is-done{% endif %}">Candidate joined</li>
+                <li class="{% if application.candidate_status is defined and application.candidate_status == 'PLACED' %}is-done{% endif %}">Marked placed</li>
+            </ul>
+            <form method="post" action="{{ url_for('placement_mark_placed') }}">
+                {{ csrf_field() }}
+                <input type="hidden" name="application_id" value="{{ application.id }}">
+                <button type="submit" class="btn btn-success"
+                        {% if offer.joining_status != 'JOINED' or not offer.actual_joining_date %}disabled title="Confirm joining first"{% endif %}>
+                    Mark Placed
+                </button>
+            </form>
+            <p class="helper-text">Mark Placed requires an accepted offer, a JOINED joining status and a recorded joining date.</p>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% else %}
+<section class="card">
+    <div class="empty-panel">
+        <h2>No workflow selected</h2>
+        <p>Select a selected application above to record feedback, manage an offer and confirm placement. Only selected candidates with actual interview outcomes are eligible.</p>
+        <a class="btn btn-primary" href="{{ url_for('applications', status='SELECTED') }}">View Selected Applications</a>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

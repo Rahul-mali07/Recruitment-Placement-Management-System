@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Request could not be completed{% endblock %}
+{% block content %}
+<div class="error-panel">
+    <p class="error-code">400</p>
+    <h1>Request could not be completed</h1>
+    <p>{{ message or "The submitted form was missing a valid security token." }}</p>
+    <p class="muted">Reload the previous page and submit the form again.</p>
+    <div class="page-actions">
+        <a class="btn btn-primary" href="{{ url_for('dashboard') if g.user else url_for('login') }}">Return to safety</a>
+    </div>
+</div>
+{% endblock %}

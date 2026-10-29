@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty_row %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><span>Dashboard</span></nav>
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Placement operations</p>
+        <h1>Dashboard</h1>
+        <p class="page-subtitle">Live counts from the academy placement database. Today is {{ today_iso|date_display }}.</p>
+    </div>
+    <div class="page-actions">
+        {% if can_access('candidates') %}<a class="btn btn-primary" href="{{ url_for('candidate_new') }}">Add Candidate</a>{% endif %}
+        {% if can_access('jobs') %}<a class="btn btn-outline" href="{{ url_for('job_new') }}">Create Job</a>{% endif %}
+    </div>
+</div>
+
+<div class="metric-grid">
+    <a class="metric-card" href="{{ url_for('candidates') }}">
+        <span class="metric-label">Total Candidates</span>
+        <span class="metric-value">{{ metrics.total_candidates }}</span>
+        <span class="metric-hint">{{ metrics.active_candidates }} currently active</span>
+    </a>
+    <a class="metric-card" href="{{ url_for('candidates', status='ACTIVE') }}">
+        <span class="metric-label">Active Candidates</span>
+        <span class="metric-value">{{ metrics.active_candidates }}</span>
+        <span class="metric-hint">Profile status ACTIVE</span>
+    </a>
+    <a class="metric-card" href="{{ url_for('companies') if can_access('companies') else '#' }}">
+        <span class="metric-label">Companies</span>
+        <span class="metric-value">{{ metrics.companies }}</span>
+        <span class="metric-hint">Registered hiring partners</span>
+    </a>
+    <a class="metric-card" href="{{ url_for('jobs', status='OPEN') if can_access('jobs') else '#' }}">
+        <span class="metric-label">Open Jobs</span>
+        <span class="metric-value">{{ metrics.open_jobs }}</span>
+        <span class="metric-hint">Job openings accepting applications</span>
+    </a>
+    <a class="metric-card" href="{{ url_for('applications') }}">
+        <span class="metric-label">Applications</span>
+        <span class="metric-value">{{ metrics.applications }}</span>
+        <span class="metric-hint">All recorded applications</span>
+    </a>
+    <a class="metric-card" href="{{ url_for('interviews') }}">
+        <span class="metric-label">Interviews</span>
+        <span class="metric-value">{{ metrics.interviews }}</span>
+        <span class="metric-hint">{{ metrics.interviews_today }} scheduled today</span>
+    </a>
+    <a class="metric-card" href="{{ url_for('applications', status='SELECTED') }}">
+        <span class="metric-label">Selected</span>
+        <span class="metric-value">{{ metrics.selected }}</span>
+        <span class="metric-hint">Applications marked selected</span>
+    </a>
+    <a class="metric-card" href="{{ url_for('candidates', status='PLACED') }}">
+        <span class="metric-label">Placed</span>
+        <span class="metric-value">{{ metrics.placed }}</span>
+        <span class="metric-hint">Candidates confirmed placed</span>
+    </a>
+</div>
+
+<div class="grid grid--two-thirds">
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <h2>Recruitment funnel</h2>
+                <p class="muted">Counts are based on the current demonstration database.</p>
+            </div>
+        </div>
+        <div class="funnel">
+            {% for stage in funnel %}
+            <div class="funnel-row">
+                <div class="funnel-label">{{ stage.label }}</div>
+                <div class="funnel-track">
+                    <div class="funnel-fill" style="width: {{ stage.percent }}%"></div>
+                    <progress class="visually-hidden" max="100" value="{{ stage.percent }}">{{ stage.percent }}%</progress>
+                </div>
+                <div class="funnel-value">{{ stage.count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="helper-text">Funnel bars are scaled to the largest stage in this dataset, not to a fixed target.</p>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><h2>Quick actions</h2></div>
+        <div class="quick-actions">
+            <a href="{{ url_for('candidates') }}">View Candidates</a>
+            {% if can_access('jobs') %}<a href="{{ url_for('jobs', status='OPEN') }}">View Open Jobs</a>{% endif %}
+            <a href="{{ url_for('interviews') }}">View Interviews</a>
+            {% if can_access('reports') %}<a href="{{ url_for('reports') }}">View Reports</a>{% endif %}
+            {% if can_access('candidates') %}<a href="{{ url_for('candidate_new') }}">Add Candidate</a>{% endif %}
+            {% if can_access('jobs') %}<a href="{{ url_for('job_new') }}">Create Job</a>{% endif %}
+            {% if can_access('applications') %}<a href="{{ url_for('applications') }}">Manage Applications</a>{% endif %}
+            {% if can_access('placement') %}<a href="{{ url_for('placement_process') }}">Placement Process</a>{% endif %}
+        </div>
+    </section>
+</div>
+
+<div class="grid grid--two">
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <h2>Upcoming interviews</h2>
+                <p class="muted">Scheduled and rescheduled interviews from today onward.</p>
+            </div>
+            <a class="text-link" href="{{ url_for('interviews') }}">All interviews</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Candidate</th><th>Company</th><th>Date</th><th>Time</th><th>Round</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in upcoming %}
+                    <tr>
+                        <td><a href="{{ url_for('candidate_details', candidate_id=item.candidate_id) }}">{{ item.candidate_name }}</a></td>
+                        <td>{{ item.company_name }}</td>
+                        <td>{{ item.interview_date|date_display }}</td>
+                        <td>{{ item.interview_time|time_display }}</td>
+                        <td>{{ item.round }}</td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(5, "No upcoming interviews are scheduled.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <h2>Recent placements</h2>
+                <p class="muted">Offers with a confirmed JOINED status.</p>
+            </div>
+            {% if can_access('reports') %}<a class="text-link" href="{{ url_for('reports') }}">Placement report</a>{% endif %}
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Candidate</th><th>Company</th><th>Role</th><th>Joined</th></tr></thead>
+                <tbody>
+                    {% for item in recent_placements %}
+                    <tr>
+                        <td>{{ item.candidate_name }}</td>
+                        <td>{{ item.company_name }}</td>
+                        <td>{{ item.job_title }}</td>
+                        <td>{{ item.actual_joining_date|date_display }}</td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(4, "No confirmed placements yet.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="grid grid--two">
+    <section class="card">
+        <div class="card-header">
+            <div><h2>Recent job openings</h2><p class="muted">Latest postings by posted date.</p></div>
+            {% if can_access('jobs') %}<a class="text-link" href="{{ url_for('jobs') }}">All jobs</a>{% endif %}
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Job Code</th><th>Company</th><th>Title</th><th>Openings</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for job in recent_jobs %}
+                    <tr>
+                        <td class="mono">{{ job.job_code }}</td>
+                        <td>{{ job.company_name }}</td>
+                        <td>{{ job.title }}</td>
+                        <td>{{ job.openings }}</td>
+                        <td>{{ badge(job.status) }}</td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(5, "No job openings recorded.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><h2>Recent activity</h2></div>
+        <ul class="activity-list">
+            {% for item in activity %}
+            <li>
+                <span class="activity-dot" aria-hidden="true"></span>
+                <div>
+                    <strong>{{ item.action }}</strong>
+                    <p>{{ item.details }}</p>
+                    <span class="activity-meta">{{ item.user_name or "System" }} &middot; {{ item.created_at[:10]|date_display }}</span>
+                </div>
+            </li>
+            {% else %}
+            <li class="empty-state">No activity has been recorded yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+
+<section class="card reference-card">
+    <div class="card-header">
+        <div>
+            <h2>Reference figures from the assignment brief</h2>
+            <p class="muted">Illustrative targets only. These numbers are not calculated from the database.</p>
+        </div>
+        <span class="badge badge--info">Illustrative</span>
+    </div>
+    <div class="reference-grid">
+        <div><span>Total candidates</span><strong>2,450</strong></div>
+        <div><span>Open jobs</span><strong>28</strong></div>
+        <div><span>Interviews today</span><strong>14</strong></div>
+        <div><span>Placed</span><strong>685</strong></div>
+    </div>
+</section>
+{% endblock %}

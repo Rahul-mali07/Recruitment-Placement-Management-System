@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty_row %}
+{% block title %}Application History{% endblock %}
+{% block content %}
+<nav class="breadcrumbs">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span>
+    <a href="{{ url_for('applications') }}">Applications</a><span>/</span>
+    <span>{{ application.application_code }}</span>
+</nav>
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Application history</p>
+        <h1>{{ application.candidate_name }}</h1>
+        <p class="page-subtitle">{{ application.application_code }} &middot; {{ application.job_code }} {{ application.job_title }} &middot; {{ application.company_name }}</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline" href="{{ url_for('candidate_details', candidate_id=application.candidate_id) }}">Candidate Profile</a>
+        <a class="btn btn-outline" href="{{ url_for('applications', candidate=application.candidate_code) }}">Back to Applications</a>
+        {% if can_access('placement') and application.status == 'SELECTED' %}
+        <a class="btn btn-primary" href="{{ url_for('placement_process', application_id=application.id) }}">Open Placement Workflow</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid--two-thirds">
+    <section class="card">
+        <div class="card-header">
+            <div><h2>Application summary</h2><p class="muted">Current recorded state. Earlier changes are retained in the activity log.</p></div>
+        </div>
+        <div class="badge-row">
+            {{ badge(application.status) }}
+            {{ badge(application.eligibility_status) }}
+            {% if offer %}{{ badge(offer.offer_status) }}{{ badge(offer.joining_status) }}{% endif %}
+        </div>
+        <dl class="detail-list" style="margin-top: 16px;">
+            <div><dt>Application ID</dt><dd class="mono">{{ application.application_code }}</dd></div>
+            <div><dt>Candidate ID</dt><dd class="mono">{{ application.candidate_code }}</dd></div>
+            <div><dt>Company</dt><dd>{{ application.company_name }}</dd></div>
+            <div><dt>Job Opening</dt><dd>{{ application.job_code }} &middot; {{ application.job_title }}</dd></div>
+            <div><dt>Applied Date</dt><dd>{{ application.applied_date|date_display }}</dd></div>
+            <div><dt>Recruiter</dt><dd>{{ application.recruiter_name or 'Unassigned' }}</dd></div>
+            <div><dt>Last Updated</dt><dd>{{ application.updated_at|date_display }}</dd></div>
+            <div><dt>Candidate Profile</dt><dd>{{ badge(application.candidate_status) }}</dd></div>
+        </dl>
+        {% if application.eligibility_reason %}
+        <div class="callout" style="margin-top: 14px;">
+            <strong>Eligibility result</strong>
+            <span>{{ application.eligibility_reason }}</span>
+        </div>
+        {% else %}
+        <p class="helper-text" style="margin-top: 14px;">Eligibility has not been checked for this application.</p>
+        {% endif %}
+    </section>
+
+    <section class="card">
+        <div class="card-header">
+            <div><h2>Offer and joining</h2><p class="muted">The latest offer linked to this application.</p></div>
+        </div>
+        {% if offer %}
+        <dl class="detail-list">
+            <div><dt>Designation</dt><dd>{{ offer.designation }}</dd></div>
+            <div><dt>Package</dt><dd>{{ "%g"|format(offer.offered_package) }} LPA</dd></div>
+            <div><dt>Offer Date</dt><dd>{{ offer.offer_date|date_display }}</dd></div>
+            <div><dt>Expected Joining</dt><dd>{{ offer.expected_joining_date|date_display }}</dd></div>
+            <div><dt>Offer Status</dt><dd>{{ badge(offer.offer_status) }}</dd></div>
+            <div><dt>Joining Status</dt><dd>{{ badge(offer.joining_status) }}</dd></div>
+            <div><dt>Actual Joining</dt><dd>{{ offer.actual_joining_date|date_display }}</dd></div>
+        </dl>
+        {% else %}
+        <p class="empty-state">No offer has been created for this application.</p>
+        {% endif %}
+    </section>
+</div>
+
+<section class="card">
+    <div class="card-header">
+        <div><h2>Interview history</h2><p class="muted">{{ interviews|length }} interview{{ '' if interviews|length == 1 else 's' }} recorded for this application.</p></div>
+        <a class="text-link" href="{{ url_for('interviews', q=application.candidate_name) }}">View all interviews</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Interview ID</th><th>Round</th><th>Date / Time</th><th>Mode</th>
+                    <th>Interviewer</th><th>Status</th><th>Result</th>
+                    <th>Technical</th><th>Communication</th><th>Problem Solving</th><th>Overall</th><th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in interviews %}
+                <tr>
+                    <td class="mono">
+                        {% if can_access('placement') %}
+                        <a href="{{ url_for('placement_process', interview_id=item.id) }}">{{ item.interview_code }}</a>
+                        {% else %}
+                        {{ item.interview_code }}
+                        {% endif %}
+                    </td>
+                    <td>{{ item.round }}</td>
+                    <td>{{ item.interview_date|date_display }}<br><span class="muted">{{ item.interview_time|time_display }}</span></td>
+                    <td>{{ item.mode }}</td>
+                    <td>{{ item.interviewer_name or '—' }}</td>
+                    <td>{{ badge(item.status) }}</td>
+                    <td>{{ badge(item.interview_result) if item.interview_result else '—' }}</td>
+                    <td>{{ item.technical_rating or '—' }}</td>
+                    <td>{{ item.communication_rating or '—' }}</td>
+                    <td>{{ item.problem_solving_rating or '—' }}</td>
+                    <td>{{ item.overall_rating or '—' }}</td>
+                    <td>{{ item.remarks or '—' }}</td>
+                </tr>
+                {% else %}
+                {{ empty_row(12, "No interviews have been scheduled for this application.") }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="card">
+    <p class="muted" style="margin: 0;">This page shows the current application record. Operational changes are also recorded in the activity log used by the dashboard.</p>
+</div>
+{% endblock %}

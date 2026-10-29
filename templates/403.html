@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Access denied{% endblock %}
+{% block content %}
+<div class="error-panel">
+    <p class="error-code">403</p>
+    <h1>Access denied</h1>
+    <p>Your account does not have permission to view this area.</p>
+    <p class="muted">If you believe this is incorrect, contact the placement administrator.</p>
+    <div class="page-actions">
+        {% if g.user %}
+        <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Go to dashboard</a>
+        {% else %}
+        <a class="btn btn-primary" href="{{ url_for('login') }}">Sign in</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

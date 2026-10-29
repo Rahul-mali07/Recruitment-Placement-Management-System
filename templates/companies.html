@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field, badge, empty_row, error_for, select_options %}
+{% block title %}Companies{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Companies</span></nav>
+<div class="page-heading">
+    <div>
+        <h1>Companies</h1>
+        <p class="page-subtitle">Maintain hiring partner profiles, HR contacts and open job counts.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" href="{{ url_for('companies') }}#company-form">Add Company</a>
+    </div>
+</div>
+
+<section class="card filter-card">
+    <form method="get" action="{{ url_for('companies') }}" class="filter-grid filter-grid--compact">
+        <div class="form-field">
+            <label for="q">Search</label>
+            <input type="text" id="q" name="q" value="{{ filters.q }}" placeholder="Company, industry, location or HR">
+        </div>
+        <div class="form-field">
+            <label for="status-filter">Status</label>
+            <select id="status-filter" name="status">
+                <option value="">All statuses</option>
+                <option value="ACTIVE" {% if filters.status == 'ACTIVE' %}selected{% endif %}>Active</option>
+                <option value="INACTIVE" {% if filters.status == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="company_type-filter">Company Type</label>
+            <select id="company_type-filter" name="company_type">
+                <option value="">All types</option>
+                {% for company_type in company_types %}
+                <option value="{{ company_type }}" {% if filters.company_type == company_type %}selected{% endif %}>{{ company_type }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a class="btn btn-outline" href="{{ url_for('companies') }}">Reset</a>
+        </div>
+    </form>
+</section>
+
+<div class="grid grid--sidebar-right">
+    <section class="card">
+        <div class="card-header">
+            <div><h2>Company list</h2><p class="muted">{{ companies|length }} compan{{ 'y' if companies|length == 1 else 'ies' }} shown. Open jobs are calculated from active job records.</p></div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Company ID</th><th>Name</th><th>Industry</th><th>Location</th><th>HR Contact</th><th>Type</th><th>Status</th><th>Open Jobs</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    {% for company in companies %}
+                    <tr>
+                        <td class="mono">{{ company.company_code }}</td>
+                        <td><strong>{{ company.name }}</strong>{% if company.website %}<br><a class="small-link" href="{{ company.website }}" rel="noopener noreferrer" target="_blank">{{ company.website }}</a>{% endif %}</td>
+                        <td>{{ company.industry }}</td>
+                        <td>{{ company.location }}</td>
+                        <td>{{ company.hr_name }}<br><span class="muted">{{ company.hr_email }}</span>{% if company.hr_mobile %}<br><span class="muted">{{ company.hr_mobile }}</span>{% endif %}</td>
+                        <td>{{ company.company_type }}</td>
+                        <td>{{ badge(company.status) }}</td>
+                        <td><a class="text-link" href="{{ url_for('jobs', company_id=company.id) }}">{{ company.open_jobs }} open</a></td>
+                        <td class="actions-cell">
+                            <a class="btn btn-link btn-sm" href="{{ url_for('companies', edit=company.id) }}#company-form">Edit</a>
+                            <a class="btn btn-link btn-sm" href="{{ url_for('jobs', company_id=company.id) }}">View Jobs</a>
+                            <form method="post" action="{{ url_for('company_toggle_status', company_id=company.id) }}" class="inline-form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="next" value="{{ request.full_path }}">
+                                <button type="submit" class="btn btn-link btn-sm">{{ "Deactivate" if company.status == 'ACTIVE' else "Activate" }}</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(9, "No companies match the selected filters. Add a company using the form.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card" id="company-form">
+        <div class="card-header">
+            <div>
+                <h2>{{ "Edit Company" if editing else "Add Company" }}</h2>
+                <p class="muted">{{ editing.company_code ~ " · " ~ editing.name if editing else "Create a new hiring partner record." }}</p>
+            </div>
+        </div>
+        {% if errors %}
+        <div class="alert alert--error"><strong>Please correct the highlighted fields.</strong></div>
+        {% endif %}
+        <form method="post" action="{{ url_for('company_save') }}" class="form-stack" novalidate>
+            {{ csrf_field() }}
+            {% if editing %}<input type="hidden" name="company_id" value="{{ editing.id }}">{% endif %}
+            <div class="form-grid form-grid--two">
+                <div class="form-field">
+                    <label for="name">Company Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" value="{{ form.get('name', '') }}" required>
+                    {{ error_for(errors, 'name') }}
+                </div>
+                <div class="form-field">
+                    <label for="industry">Industry <span class="required">*</span></label>
+                    <input type="text" id="industry" name="industry" value="{{ form.get('industry', '') }}" required>
+                    {{ error_for(errors, 'industry') }}
+                </div>
+                <div class="form-field">
+                    <label for="website">Website URL</label>
+                    <input type="url" id="website" name="website" value="{{ form.get('website', '') }}" placeholder="https://example.com">
+                    {{ error_for(errors, 'website') }}
+                </div>
+                <div class="form-field">
+                    <label for="location">Location <span class="required">*</span></label>
+                    <input type="text" id="location" name="location" value="{{ form.get('location', '') }}" required>
+                    {{ error_for(errors, 'location') }}
+                </div>
+                <div class="form-field">
+                    <label for="hr_name">HR Name <span class="required">*</span></label>
+                    <input type="text" id="hr_name" name="hr_name" value="{{ form.get('hr_name', '') }}" required>
+                    {{ error_for(errors, 'hr_name') }}
+                </div>
+                <div class="form-field">
+                    <label for="hr_email">HR Email <span class="required">*</span></label>
+                    <input type="email" id="hr_email" name="hr_email" value="{{ form.get('hr_email', '') }}" required>
+                    {{ error_for(errors, 'hr_email') }}
+                </div>
+                <div class="form-field">
+                    <label for="hr_mobile">HR Mobile</label>
+                    <input type="text" id="hr_mobile" name="hr_mobile" value="{{ form.get('hr_mobile', '') }}" maxlength="10" inputmode="numeric" placeholder="10 digits">
+                    {{ error_for(errors, 'hr_mobile') }}
+                </div>
+                <div class="form-field">
+                    <label for="company_type">Company Type <span class="required">*</span></label>
+                    <select id="company_type" name="company_type" required>
+                        {{ select_options(company_types, form.get('company_type', 'MNC')) }}
+                    </select>
+                    {{ error_for(errors, 'company_type') }}
+                </div>
+                <div class="form-field">
+                    <label for="status">Status <span class="required">*</span></label>
+                    <select id="status" name="status" required>
+                        <option value="ACTIVE" {% if form.get('status', 'ACTIVE') == 'ACTIVE' %}selected{% endif %}>Active</option>
+                        <option value="INACTIVE" {% if form.get('status') == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+                    </select>
+                    {{ error_for(errors, 'status') }}
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{{ "Update Company" if editing else "Save Company" }}</button>
+                {% if editing %}<a class="btn btn-outline" href="{{ url_for('companies') }}">Cancel edit</a>{% endif %}
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

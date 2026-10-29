@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field, error_for, select_options %}
+{% block title %}{{ "Edit Job" if mode == 'edit' else "Create Job" }}{% endblock %}
+{% block content %}
+<nav class="breadcrumbs">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span>
+    <a href="{{ url_for('jobs') }}">Jobs</a><span>/</span>
+    <span>{{ "Edit" if mode == 'edit' else "Create" }}</span>
+</nav>
+<div class="page-heading">
+    <div>
+        <h1>{{ "Edit Job Opening" if mode == 'edit' else "Create Job Opening" }}</h1>
+        <p class="page-subtitle">
+            {% if mode == 'edit' and job %}{{ job.job_code }} &middot; {{ job.title }}{% else %}Define the role, compensation, eligibility and application dates.{% endif %}
+        </p>
+    </div>
+    <div class="page-actions"><a class="btn btn-outline" href="{{ url_for('jobs') }}">Back to Jobs</a></div>
+</div>
+
+{% if errors %}
+<div class="alert alert--error" role="alert">
+    <strong>Please correct the highlighted fields.</strong>
+    <ul class="error-list">
+        {% for field, message in errors.items() %}<li>{{ message }}</li>{% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('job_edit', job_id=job.id) if mode == 'edit' and job else url_for('job_new') }}" class="form-card" novalidate>
+    {{ csrf_field() }}
+    <section class="card">
+        <div class="card-header"><div><h2>Basic Information</h2><p class="muted">Company, role and capacity details.</p></div></div>
+        <div class="form-grid form-grid--three">
+            <div class="form-field">
+                <label for="company_id">Company <span class="required">*</span></label>
+                <select id="company_id" name="company_id" required>
+                    <option value="">Select company</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}" {% if form.get('company_id')|string == company.id|string %}selected{% endif %}>{{ company.name }}{% if company.status != 'ACTIVE' %} (inactive){% endif %}</option>
+                    {% endfor %}
+                </select>
+                <p class="helper-text">Inactive companies cannot be used for an open job.</p>
+                {{ error_for(errors, 'company_id') }}
+            </div>
+            <div class="form-field">
+                <label for="job_code">Job Code <span class="required">*</span></label>
+                <input type="text" id="job_code" name="job_code" value="{{ form.get('job_code', '') }}" required placeholder="JOB-2026-009">
+                {{ error_for(errors, 'job_code') }}
+            </div>
+            <div class="form-field">
+                <label for="title">Job Title <span class="required">*</span></label>
+                <input type="text" id="title" name="title" value="{{ form.get('title', '') }}" required>
+                {{ error_for(errors, 'title') }}
+            </div>
+            <div class="form-field">
+                <label for="openings">Number of Openings <span class="required">*</span></label>
+                <input type="number" id="openings" name="openings" value="{{ form.get('openings', '') }}" min="1" step="1" required>
+                {{ error_for(errors, 'openings') }}
+            </div>
+            <div class="form-field">
+                <label for="employment_type">Employment Type <span class="required">*</span></label>
+                <select id="employment_type" name="employment_type" required>
+                    {{ select_options(employment_types, form.get('employment_type', 'Full-time')) }}
+                </select>
+                {{ error_for(errors, 'employment_type') }}
+            </div>
+            <div class="form-field">
+                <label for="location">Location <span class="required">*</span></label>
+                <input type="text" id="location" name="location" value="{{ form.get('location', '') }}" required>
+                {{ error_for(errors, 'location') }}
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Compensation</h2><p class="muted">Annual package in LPA (lakhs per annum).</p></div></div>
+        <div class="form-grid form-grid--three">
+            <div class="form-field">
+                <label for="min_package">Minimum Package (LPA)</label>
+                <input type="number" id="min_package" name="min_package" value="{{ form.get('min_package', '') }}" min="0" step="0.1">
+                {{ error_for(errors, 'min_package') }}
+            </div>
+            <div class="form-field">
+                <label for="max_package">Maximum Package (LPA)</label>
+                <input type="number" id="max_package" name="max_package" value="{{ form.get('max_package', '') }}" min="0" step="0.1">
+                {{ error_for(errors, 'max_package') }}
+            </div>
+            <div class="form-field">
+                <label for="experience_required">Experience Required</label>
+                <input type="text" id="experience_required" name="experience_required" value="{{ form.get('experience_required', '') }}" placeholder="e.g. 0-2 years">
+                {{ error_for(errors, 'experience_required') }}
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Eligibility Criteria</h2><p class="muted">Used by the application eligibility check.</p></div></div>
+        <div class="form-grid form-grid--three">
+            <div class="form-field form-field--wide">
+                <label for="qualifications">Qualification(s) <span class="required">*</span></label>
+                <input type="text" id="qualifications" name="qualifications" value="{{ form.get('qualifications', '') }}" required placeholder="BE, BTech, MCA">
+                <p class="helper-text">Comma-separated. The candidate qualification must match one listed value.</p>
+                {{ error_for(errors, 'qualifications') }}
+            </div>
+            <div class="form-field">
+                <label for="min_percentage">Minimum Percentage <span class="required">*</span></label>
+                <input type="number" id="min_percentage" name="min_percentage" value="{{ form.get('min_percentage', '') }}" min="0" max="100" step="0.01" required>
+                {{ error_for(errors, 'min_percentage') }}
+            </div>
+            <div class="form-field">
+                <label for="min_passing_year">Minimum Passing Year</label>
+                <input type="number" id="min_passing_year" name="min_passing_year" value="{{ form.get('min_passing_year', '') }}" min="1980" max="2100">
+                {{ error_for(errors, 'min_passing_year') }}
+            </div>
+            <div class="form-field">
+                <label for="max_passing_year">Maximum Passing Year</label>
+                <input type="number" id="max_passing_year" name="max_passing_year" value="{{ form.get('max_passing_year', '') }}" min="1980" max="2100">
+                {{ error_for(errors, 'max_passing_year') }}
+            </div>
+            <div class="form-field">
+                <label for="max_backlogs">Maximum Backlogs <span class="required">*</span></label>
+                <input type="number" id="max_backlogs" name="max_backlogs" value="{{ form.get('max_backlogs', 0) }}" min="0" step="1" required>
+                {{ error_for(errors, 'max_backlogs') }}
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Skills</h2><p class="muted">Primary technology must match the candidate's primary technology.</p></div></div>
+        <div class="form-grid form-grid--two">
+            <div class="form-field">
+                <label for="technology">Required Technology <span class="required">*</span></label>
+                <select id="technology" name="technology" required>
+                    <option value="">Select technology</option>
+                    {{ select_options(technologies, form.get('technology', '')) }}
+                </select>
+                {{ error_for(errors, 'technology') }}
+            </div>
+            <div class="form-field">
+                <label for="required_skills">Required Skills <span class="required">*</span></label>
+                <input type="text" id="required_skills" name="required_skills" value="{{ form.get('required_skills', '') }}" required placeholder="e.g. Core Java, SQL, Spring Boot">
+                {{ error_for(errors, 'required_skills') }}
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><div><h2>Important Dates &amp; Status</h2><p class="muted">The deadline cannot be before the posted date.</p></div></div>
+        <div class="form-grid form-grid--three">
+            <div class="form-field">
+                <label for="posted_date">Posted Date <span class="required">*</span></label>
+                <input type="date" id="posted_date" name="posted_date" value="{{ form.get('posted_date', '') }}" required>
+                {{ error_for(errors, 'posted_date') }}
+            </div>
+            <div class="form-field">
+                <label for="deadline">Application Deadline <span class="required">*</span></label>
+                <input type="date" id="deadline" name="deadline" value="{{ form.get('deadline', '') }}" required>
+                {{ error_for(errors, 'deadline') }}
+            </div>
+            <div class="form-field">
+                <label for="status">Status <span class="required">*</span></label>
+                <select id="status" name="status" required>
+                    {{ select_options(job_statuses, form.get('status', 'DRAFT')) }}
+                </select>
+                {{ error_for(errors, 'status') }}
+            </div>
+        </div>
+    </section>
+
+    <div class="sticky-actions">
+        <button type="submit" class="btn btn-primary">{{ "Update Job" if mode == 'edit' else "Save Job" }}</button>
+        <a class="btn btn-outline" href="{{ url_for('jobs') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% from "_macros.html" import csrf_field, nav_icon %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Dashboard{% endblock %} | KIRAN Talent Operations</title>
+    <meta name="theme-color" content="#0b1f33">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+{% set ep = request.endpoint or '' %}
+{% set nav_groups = [
+    ('Overview', [('dashboard', 'Dashboard', 'dashboard')]),
+    ('Talent', [('candidates', 'Candidates', 'candidates'),
+                ('applications', 'Applications', 'applications')]),
+    ('Opportunities', [('companies', 'Companies', 'companies'),
+                       ('jobs', 'Jobs', 'jobs')]),
+    ('Operations', [('interviews', 'Interviews', 'interviews'),
+                    ('placement', 'Placement Process', 'placement_process')]),
+    ('Insights', [('reports', 'Reports', 'reports')])
+] %}
+
+<header class="topbar">
+    <div class="topbar-mobile-brand">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" width="32" height="32">
+        <span>KIRAN<span class="brand-slash">/</span></span>
+    </div>
+    <div class="topbar-context">
+        <span class="topbar-kicker">Recruitment &amp; Placement Management</span>
+        <span class="topbar-date">{{ today_iso|date_display }}</span>
+    </div>
+    <div class="topbar-actions">
+        {% if g.user %}
+        <div class="account-chip">
+            <span class="avatar" aria-hidden="true">{{ (g.user.full_name or g.user.username)[:1]|upper }}</span>
+            <span class="user-meta">
+                <span class="user-name">{{ g.user.full_name or g.user.username }}</span>
+                <span class="user-role">{{ role_labels.get(g.user.role, g.user.role) }}</span>
+            </span>
+        </div>
+        <form method="post" action="{{ url_for('logout') }}" class="inline-form">
+            {{ csrf_field() }}
+            <button type="submit" class="btn btn-quiet btn-sm">Logout</button>
+        </form>
+        {% else %}
+        <a class="btn btn-primary btn-sm" href="{{ url_for('login') }}">Sign in</a>
+        {% endif %}
+    </div>
+</header>
+
+<div class="app-shell{% if not g.user %} app-shell--guest{% endif %}">
+    {% if g.user %}
+    <aside class="sidebar">
+        <a class="brand" href="{{ url_for('dashboard') }}">
+            <img class="brand-mark" src="{{ url_for('static', filename='images/logo.svg') }}" alt="" width="42" height="42">
+            <span class="brand-lockup">
+                <span class="brand-name">KIRAN<span class="brand-slash">/</span></span>
+                <span class="brand-subtitle">Talent Operations</span>
+            </span>
+        </a>
+        <p class="sidebar-context">Recruitment &amp; Placement</p>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            {% for group_label, group_items in nav_groups %}
+            {% set group_state = namespace(visible=false) %}
+            {% for key, label, endpoint in group_items %}
+            {% if can_access(key) %}{% set group_state.visible = true %}{% endif %}
+            {% endfor %}
+            {% if group_state.visible %}
+            <div class="nav-group">
+                <p class="nav-group-label">{{ group_label }}</p>
+                {% for key, label, endpoint in group_items %}
+                {% if can_access(key) %}
+                {% set active = (key == 'dashboard' and ep == 'dashboard')
+                    or (key == 'candidates' and ep.startswith('candidate'))
+                    or (key == 'companies' and ep.startswith('compan'))
+                    or (key == 'jobs' and ep.startswith('job'))
+                    or (key == 'applications' and ep.startswith('application'))
+                    or (key == 'interviews' and ep.startswith('interview'))
+                    or (key == 'placement' and ep.startswith('placement'))
+                    or (key == 'reports' and ep.startswith('report')) %}
+                <a class="nav-link{% if active %} is-active{% endif %}" href="{{ url_for(endpoint) }}"
+                   {% if active %}aria-current="page"{% endif %}>
+                    {{ nav_icon(key) }}
+                    <span class="nav-label">{{ label }}</span>
+                    <span class="nav-indicator" aria-hidden="true"></span>
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </nav>
+
+        <div class="sidebar-note">
+            <span class="sidebar-note-kicker">Placement desk</span>
+            <p>Track every candidate from first application to joining day.</p>
+        </div>
+    </aside>
+    {% endif %}
+
+    <div class="main-shell">
+        <main id="main-content" class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-stack" role="status" aria-live="polite">
+                {% for category, message in messages %}
+                <div class="alert alert--{{ category if category in ['success', 'error', 'warning', 'info'] else 'info' }}">
+                    <span class="alert-dot" aria-hidden="true"></span>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="footer">
+            <span><strong>KIRAN</strong> Talent Operations</span>
+            <span>Recruitment &amp; Placement Management &middot; {{ current_year }}</span>
+        </footer>
+    </div>
+</div>
+</body>
+</html>

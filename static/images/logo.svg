@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="KIRAN Talent Operations logo">
+  <rect width="64" height="64" rx="10" fill="#0b1f33"/>
+  <path d="M16 14v36" stroke="#fffdf9" stroke-width="6" stroke-linecap="square"/>
+  <path d="M18 32 37 14M18 32l21 18" stroke="#fffdf9" stroke-width="6" stroke-linecap="square"/>
+  <path d="M48 13 39 51" stroke="#5a78ff" stroke-width="5" stroke-linecap="square"/>
+</svg>

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Something went wrong{% endblock %}
+{% block content %}
+<div class="error-panel">
+    <p class="error-code">500</p>
+    <h1>Something went wrong</h1>
+    <p>The request could not be completed. The technical details have been logged on the server.</p>
+    <p class="muted">Please try again. If the problem continues, contact the placement administrator.</p>
+    <div class="page-actions">
+        {% if g.user %}
+        <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Go to dashboard</a>
+        {% else %}
+        <a class="btn btn-primary" href="{{ url_for('login') }}">Sign in</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

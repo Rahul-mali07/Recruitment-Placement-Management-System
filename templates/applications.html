@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf_field, badge, empty_row %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<nav class="breadcrumbs"><a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span><span>Applications</span></nav>
+<div class="page-heading">
+    <div>
+        <h1>Applications</h1>
+        <p class="page-subtitle">Track candidate applications, check eligibility and move candidates through the pipeline.</p>
+    </div>
+</div>
+
+<div class="summary-grid summary-grid--four">
+    <div class="summary-card"><span>Total</span><strong>{{ pipeline.TOTAL }}</strong></div>
+    <div class="summary-card"><span>Applied</span><strong>{{ pipeline.APPLIED }}</strong></div>
+    <div class="summary-card"><span>Shortlisted</span><strong>{{ pipeline.SHORTLISTED }}</strong></div>
+    <div class="summary-card"><span>Selected</span><strong>{{ pipeline.SELECTED }}</strong></div>
+</div>
+<div class="pipeline-strip">
+    <span>Eligible <strong>{{ pipeline.ELIGIBLE }}</strong></span>
+    <span>Interview Scheduled <strong>{{ pipeline.INTERVIEW_SCHEDULED }}</strong></span>
+    <span>Rejected <strong>{{ pipeline.REJECTED }}</strong></span>
+    <span>Withdrawn <strong>{{ pipeline.WITHDRAWN }}</strong></span>
+</div>
+
+<section class="card filter-card">
+    <form method="get" action="{{ url_for('applications') }}" class="filter-grid">
+        <div class="form-field">
+            <label for="application_id">Application ID</label>
+            <input type="text" id="application_id" name="application_id" value="{{ filters.application_id }}" placeholder="APP1001">
+        </div>
+        <div class="form-field">
+            <label for="candidate">Candidate</label>
+            <input type="text" id="candidate" name="candidate" value="{{ filters.candidate }}" placeholder="Name or candidate ID">
+        </div>
+        <div class="form-field">
+            <label for="company_id">Company</label>
+            <select id="company_id" name="company_id">
+                <option value="">All companies</option>
+                {% for company in companies %}
+                <option value="{{ company.id }}" {% if filters.company_id == company.id|string %}selected{% endif %}>{{ company.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="job_id">Job</label>
+            <select id="job_id" name="job_id">
+                <option value="">All jobs</option>
+                {% for job in jobs %}
+                <option value="{{ job.id }}" {% if filters.job_id == job.id|string %}selected{% endif %}>{{ job.job_code }} &middot; {{ job.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="status">Application Status</label>
+            <select id="status" name="status">
+                <option value="">All statuses</option>
+                {% for status in application_statuses %}
+                <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status|status_label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="date_from">Date From</label>
+            <input type="date" id="date_from" name="date_from" value="{{ filters.date_from }}">
+        </div>
+        <div class="form-field">
+            <label for="date_to">Date To</label>
+            <input type="date" id="date_to" name="date_to" value="{{ filters.date_to }}">
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a class="btn btn-outline" href="{{ url_for('applications') }}">Reset</a>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <div class="card-header">
+        <div><h2>New application</h2><p class="muted">Create an application for an open job. Duplicate candidate/job pairs are rejected.</p></div>
+    </div>
+    <form method="post" action="{{ url_for('application_new') }}" class="inline-create-form">
+        {{ csrf_field() }}
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        <div class="form-field">
+            <label for="new-candidate">Candidate <span class="required">*</span></label>
+            <select id="new-candidate" name="candidate_id" required>
+                <option value="">Select candidate</option>
+                {% for candidate in candidates %}
+                <option value="{{ candidate.id }}">{{ candidate.candidate_code }} &middot; {{ candidate.full_name }} ({{ candidate.primary_technology }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="new-job">Open Job <span class="required">*</span></label>
+            <select id="new-job" name="job_id" required>
+                <option value="">Select job</option>
+                {% for job in jobs if job.status == 'OPEN' %}
+                <option value="{{ job.id }}">{{ job.job_code }} &middot; {{ job.title }} &middot; {{ job.company_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-field form-field--action">
+            <button type="submit" class="btn btn-primary">Create Application</button>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <div class="card-header">
+        <div><h2>Application pipeline</h2><p class="muted">{{ applications|length }} application{{ '' if applications|length == 1 else 's' }} match the filters.</p></div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Application ID</th><th>Candidate</th><th>Company</th><th>Job</th>
+                    <th>Applied Date</th><th>Eligibility Result</th><th>Application Status</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td class="mono">{{ app.application_code }}</td>
+                    <td><a href="{{ url_for('candidate_details', candidate_id=app.candidate_id) }}">{{ app.candidate_name }}</a><br><span class="muted mono">{{ app.candidate_code }}</span></td>
+                    <td>{{ app.company_name }}</td>
+                    <td>{{ app.job_code }}<br><span class="muted">{{ app.job_title }}</span></td>
+                    <td>{{ app.applied_date|date_display }}</td>
+                    <td>
+                        {{ badge(app.eligibility_status) }}
+                        {% if app.eligibility_reason %}<span class="cell-note">{{ app.eligibility_reason }}</span>{% endif %}
+                    </td>
+                    <td>{{ badge(app.status) }}</td>
+                    <td class="actions-cell actions-cell--stack">
+                        <form method="post" action="{{ url_for('application_check_eligibility', application_id=app.id) }}" class="inline-form">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="next" value="{{ request.full_path }}">
+                            <button type="submit" class="btn btn-link btn-sm">Check Eligibility</button>
+                        </form>
+                        {% if app.status in ['APPLIED', 'ELIGIBLE'] and app.eligibility_status == 'ELIGIBLE' %}
+                        <form method="post" action="{{ url_for('application_shortlist', application_id=app.id) }}" class="inline-form">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="next" value="{{ request.full_path }}">
+                            <button type="submit" class="btn btn-link btn-sm">Shortlist</button>
+                        </form>
+                        {% endif %}
+                        {% if app.status in ['APPLIED', 'ELIGIBLE', 'SHORTLISTED', 'INTERVIEW_SCHEDULED'] %}
+                        <form method="post" action="{{ url_for('application_reject', application_id=app.id) }}" class="inline-form">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="next" value="{{ request.full_path }}">
+                            <button type="submit" class="btn btn-link btn-sm btn-link--danger">Reject</button>
+                        </form>
+                        {% endif %}
+                        {% if app.status in ['ELIGIBLE', 'SHORTLISTED', 'INTERVIEW_SCHEDULED'] %}
+                        <a class="btn btn-link btn-sm" href="{{ url_for('interviews', candidate_id=app.candidate_id, job_id=app.job_id, company_id=app.company_id) }}">Schedule Interview</a>
+                        {% endif %}
+                        <a class="btn btn-link btn-sm" href="{{ url_for('application_history', application_id=app.id) }}">View History</a>
+                    </td>
+                </tr>
+                {% else %}
+                {{ empty_row(8, "No applications match the selected filters. Create an application above.") }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

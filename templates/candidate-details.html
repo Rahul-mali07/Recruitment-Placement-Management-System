@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, empty_row %}
+{% block title %}{{ candidate.full_name }}{% endblock %}
+{% block content %}
+<nav class="breadcrumbs">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a><span>/</span>
+    <a href="{{ url_for('candidates') }}">Candidates</a><span>/</span>
+    <span>{{ candidate.candidate_code }}</span>
+</nav>
+
+<div class="profile-banner">
+    <div class="profile-identity">
+        <span class="profile-avatar" aria-hidden="true">{{ candidate.full_name[:1]|upper }}</span>
+        <div>
+            <p class="eyebrow">{{ candidate.candidate_code }}</p>
+            <h1>{{ candidate.full_name }}</h1>
+            <p class="muted">{{ candidate.email }} &middot; {{ candidate.mobile }}</p>
+            <div class="badge-row">
+                {{ badge(candidate.profile_status) }}
+                <span class="badge badge--neutral">{{ candidate.primary_technology }}</span>
+                <span class="badge badge--neutral">{{ candidate.qualification }}</span>
+                <span class="badge badge--neutral">{{ candidate.passing_year }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="profile-stats">
+        <div><strong>{{ application_count }}</strong><span>Applications</span></div>
+        <div><strong>{{ offer_count }}</strong><span>Offers</span></div>
+        <div><strong>{{ "%g"|format(candidate.score) }}%</strong><span>Score</span></div>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" href="{{ url_for('candidate_edit', candidate_id=candidate.id) }}">Edit Candidate</a>
+        <a class="btn btn-outline" href="{{ url_for('applications', candidate=candidate.candidate_code) }}">View related Applications</a>
+        <a class="btn btn-ghost" href="{{ url_for('candidates') }}">Back to Candidate List</a>
+    </div>
+</div>
+
+<div class="grid grid--two">
+    <section class="card">
+        <div class="card-header"><h2>Personal Information</h2></div>
+        <dl class="detail-list">
+            <div><dt>Full name</dt><dd>{{ candidate.full_name }}</dd></div>
+            <div><dt>Email</dt><dd>{{ candidate.email }}</dd></div>
+            <div><dt>Mobile</dt><dd>{{ candidate.mobile }}</dd></div>
+            <div><dt>Date of birth</dt><dd>{{ candidate.date_of_birth|date_display }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ candidate.gender or "Not provided" }}</dd></div>
+            <div><dt>Current location</dt><dd>{{ candidate.current_location or "Not provided" }}</dd></div>
+            <div><dt>Preferred location</dt><dd>{{ candidate.preferred_location or "Not provided" }}</dd></div>
+            <div><dt>Profile status</dt><dd>{{ badge(candidate.profile_status) }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><h2>Academic Details</h2></div>
+        <dl class="detail-list">
+            <div><dt>Qualification</dt><dd>{{ candidate.qualification }}</dd></div>
+            <div><dt>College</dt><dd>{{ candidate.college }}</dd></div>
+            <div><dt>University</dt><dd>{{ candidate.university or "Not provided" }}</dd></div>
+            <div><dt>Passing year</dt><dd>{{ candidate.passing_year }}</dd></div>
+            <div><dt>Percentage</dt><dd>{{ "%g"|format(candidate.score) }}%</dd></div>
+            <div><dt>Backlogs</dt><dd>{{ candidate.backlog_count }}</dd></div>
+            <div><dt>Primary technology</dt><dd>{{ candidate.primary_technology }}</dd></div>
+            <div><dt>Secondary skills</dt><dd>{{ candidate.secondary_skills or "Not provided" }}</dd></div>
+            <div><dt>Skill level</dt><dd>{{ candidate.skill_level }}</dd></div>
+        </dl>
+    </section>
+</div>
+
+<section class="card">
+    <div class="card-header">
+        <div><h2>Applications History</h2><p class="muted">Job applications linked to this candidate.</p></div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Application</th><th>Company</th><th>Job</th><th>Applied</th><th>Eligibility</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td class="mono">{{ app.application_code }}</td>
+                    <td>{{ app.company_name }}</td>
+                    <td>{{ app.job_code }} &middot; {{ app.job_title }}</td>
+                    <td>{{ app.applied_date|date_display }}</td>
+                    <td>{{ badge(app.eligibility_status) }}</td>
+                    <td>{{ badge(app.status) }}</td>
+                    <td><a class="btn btn-link btn-sm" href="{{ url_for('application_history', application_id=app.id) }}">View History</a></td>
+                </tr>
+                {% else %}
+                {{ empty_row(7, "No applications recorded for this candidate.") }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="grid grid--two">
+    <section class="card">
+        <div class="card-header"><h2>Interview History</h2></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Code</th><th>Company</th><th>Round</th><th>Date</th><th>Status</th><th>Result</th></tr></thead>
+                <tbody>
+                    {% for interview in interviews %}
+                    <tr>
+                        <td class="mono">{{ interview.interview_code }}</td>
+                        <td>{{ interview.company_name }}</td>
+                        <td>{{ interview.round }}</td>
+                        <td>{{ interview.interview_date|date_display }}<br><span class="muted">{{ interview.interview_time|time_display }}</span></td>
+                        <td>{{ badge(interview.status) }}</td>
+                        <td>{{ badge(interview.interview_result) }}</td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(6, "No interviews scheduled for this candidate.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><h2>Offer / Placement History</h2></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Offer Status</th><th>Joining</th></tr></thead>
+                <tbody>
+                    {% for offer in offers %}
+                    <tr>
+                        <td>{{ offer.company_name }}</td>
+                        <td>{{ offer.designation }}</td>
+                        <td>{{ "%g"|format(offer.offered_package) }} LPA</td>
+                        <td>{{ badge(offer.offer_status) }}</td>
+                        <td>{{ badge(offer.joining_status) }}<br><span class="muted">{{ offer.actual_joining_date|date_display }}</span></td>
+                    </tr>
+                    {% else %}
+                    {{ empty_row(5, "No offers or placement records yet.") }}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
