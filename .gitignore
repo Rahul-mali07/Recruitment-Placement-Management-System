@@ -17,3 +17,5 @@ static/screenshots/*.jpg
 !static/screenshots/.gitkeep
 .DS_Store
 Thumbs.db
+
+.vercel
