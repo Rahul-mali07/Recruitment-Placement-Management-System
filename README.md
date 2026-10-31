@@ -142,6 +142,27 @@ python app.py --host 0.0.0.0 --port 5000 --debug
 
 Stop the server with `Ctrl+C`.
 
+## Deploy on Vercel
+
+The repository ships with `vercel.json` and exposes the Flask `app` from
+`app.py`, so Vercel's zero-configuration Flask preset can deploy it directly.
+
+1. Import the GitHub repository in the Vercel dashboard, or run `vercel` from
+   the project folder.
+2. Add these environment variables in the Vercel project settings:
+   - `APP_ENV=production`
+   - `SECRET_KEY` — a long random value (generate with
+     `python -c "import secrets; print(secrets.token_hex(32))"`)
+   - `DATABASE_PATH=/tmp/recruitment.db` (optional; Vercel defaults to the temp
+     directory automatically)
+3. Deploy. On the first cold start the app creates and seeds the SQLite
+   database in `/tmp`, so the demo logins below work immediately.
+
+> Vercel's filesystem is ephemeral. Data written at runtime is kept per
+> function instance and is not durable across cold starts or instances. For
+> production use, point the app at a persistent database (for example Turso,
+> PostgreSQL or another managed database).
+
 ## Demo Logins
 
 | Role | Username | Password |

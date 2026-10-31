@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import tempfile
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -40,6 +41,22 @@ def _as_bool(value: str | None, default: bool = False) -> bool:
 
 APP_ENV = os.environ.get("APP_ENV", "development").strip().lower()
 IS_PRODUCTION = APP_ENV == "production"
+IS_VERCEL = bool(os.environ.get("VERCEL"))
+
+
+def _default_database_path() -> str:
+    """Return a writable database path for the current platform."""
+    configured = os.environ.get("DATABASE_PATH")
+    if configured:
+        return configured
+    if os.environ.get("INSTANCE_PATH"):
+        base_dir = Path(os.environ["INSTANCE_PATH"])
+    elif IS_VERCEL:
+        # Serverless filesystems are read-only except for the temp directory.
+        base_dir = Path(tempfile.gettempdir())
+    else:
+        base_dir = BASE_DIR / "instance"
+    return str(base_dir / "recruitment.db")
 
 
 class Config:
@@ -50,10 +67,7 @@ class Config:
     # ephemeral key is generated so sessions reset whenever the server restarts.
     SECRET_KEY = os.environ.get("SECRET_KEY") or (None if IS_PRODUCTION else secrets.token_hex(32))
 
-    DATABASE = os.environ.get(
-        "DATABASE_PATH",
-        str(Path(os.environ.get("INSTANCE_PATH", BASE_DIR / "instance")) / "recruitment.db"),
-    )
+    DATABASE = _default_database_path()
 
     CSRF_ENABLED = _as_bool(os.environ.get("CSRF_ENABLED"), True)
 

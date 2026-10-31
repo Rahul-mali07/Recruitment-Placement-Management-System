@@ -17,6 +17,7 @@ import getpass
 import hmac
 import io
 import logging
+import os
 import re
 import secrets
 import sqlite3
@@ -1005,6 +1006,29 @@ def create_app(config_object=None, test_config: dict | None = None) -> Flask:
         return render_template("500.html"), 500
 
     return app
+
+
+def _bootstrap_serverless_database(application: Flask) -> None:
+    """Create and seed the SQLite database on serverless hosts (e.g. Vercel).
+
+    Serverless platforms only allow writes to a temporary directory, so the
+    database is rebuilt on the first cold start of each function instance.
+    """
+    if not os.environ.get("VERCEL"):
+        return
+    database_path = Path(application.config["DATABASE"])
+    if database_path.exists() and database_path.stat().st_size > 0:
+        return
+    with application.app_context():
+        try:
+            database.init_db()
+            seed_demo()
+        except sqlite3.Error as exc:
+            application.logger.warning("Database bootstrap skipped: %s", exc)
+
+
+app = create_app()
+_bootstrap_serverless_database(app)
 
 
 # ----------------------------------------------------------------------
